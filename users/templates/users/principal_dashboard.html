@@ -1,0 +1,331 @@
+{% extends 'users/base_dashboard.html' %}
+
+{% block title %}Principal Dashboard - CMRIT EMS{% endblock %}
+
+{% block nav_items %}
+<li class="nav-item">
+    <a class="nav-link" href="{% url 'event_approval_list' %}">
+        <i class="fas fa-check-circle"></i> Event Approvals
+    </a>
+</li>
+<li class="nav-item">
+    <a class="nav-link" href="{% url 'analytics' %}">
+        <i class="fas fa-chart-line"></i> Analytics
+    </a>
+</li>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <div class="row mb-4">
+        <div class="col-md-4 mb-4">
+            <div class="card bg-primary text-white h-100">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h6 class="card-title">Total Events</h6>
+                            <h2 class="mb-0" id="total-events-count">0</h2>
+                        </div>
+                        <i class="fas fa-calendar-alt fa-2x"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4 mb-4">
+            <div class="card bg-success text-white h-100">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h6 class="card-title">Approved Events</h6>
+                            <h2 class="mb-0" id="approved-events-count">0</h2>
+                        </div>
+                        <i class="fas fa-check-circle fa-2x"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4 mb-4">
+            <div class="card bg-info text-white h-100">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h6 class="card-title">Pending Approvals</h6>
+                            <h2 class="mb-0" id="pending-approvals-count">0</h2>
+                        </div>
+                        <i class="fas fa-hourglass-half fa-2x"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="row">
+        <div class="col-md-6 mb-4">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">Events by Department</h5>
+                </div>
+                <div class="card-body">
+                    <div id="dept-events-chart" style="height: 300px;"></div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6 mb-4">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">Events Timeline</h5>
+                </div>
+                <div class="card-body">
+                    <div id="events-timeline-chart" style="height: 300px;"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="row">
+        <div class="col-md-8 mb-4">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">Event Budget Distribution</h5>
+                </div>
+                <div class="card-body">
+                    <div id="budget-distribution-chart" style="height: 300px;"></div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4 mb-4">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">Event Mode Distribution</h5>
+                </div>
+                <div class="card-body">
+                    <div id="event-mode-chart" style="height: 300px;"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // Initialize data object
+    let dashboardData = {
+        totalEvents: 0,
+        approvedEvents: 0,
+        pendingApprovals: 0,
+        departmentEvents: {},
+        budgetByDepartment: {},
+        monthlyEvents: [
+            {month: 'Jan', count: 0},
+            {month: 'Feb', count: 0},
+            {month: 'Mar', count: 0},
+            {month: 'Apr', count: 0},
+            {month: 'May', count: 0},
+            {month: 'Jun', count: 0},
+            {month: 'Jul', count: 0},
+            {month: 'Aug', count: 0},
+            {month: 'Sep', count: 0},
+            {month: 'Oct', count: 0},
+            {month: 'Nov', count: 0},
+            {month: 'Dec', count: 0}
+        ],
+        eventModes: {
+            'Online': 0,
+            'Offline': 0
+        },
+        recentEvents: []
+    };
+    
+    // Function to fetch real-time data from API
+    function fetchDashboardData() {
+        fetch('/events/api/dashboard/principal/')
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    dashboardData = data;
+                    updateDashboardUI();
+                } else {
+                    console.error('Error fetching dashboard data:', data.message);
+                }
+            })
+            .catch(error => {
+                console.error('Error fetching dashboard data:', error);
+            });
+    }
+    
+    // Initial data fetch
+    fetchDashboardData();
+
+    // Function to update all UI elements with the latest data
+    function updateDashboardUI() {
+        // Update dashboard counters
+        document.getElementById('total-events-count').textContent = dashboardData.totalEvents;
+        document.getElementById('approved-events-count').textContent = dashboardData.approvedEvents;
+        document.getElementById('pending-approvals-count').textContent = dashboardData.pendingApprovals;
+        
+        // Department Events Chart using Plotly
+        const deptLabels = Object.keys(dashboardData.departmentEvents);
+        const deptValues = Object.values(dashboardData.departmentEvents);
+        
+        Plotly.newPlot('dept-events-chart', [{
+            x: deptLabels,
+            y: deptValues,
+            type: 'bar',
+            marker: {
+                color: '#269bd8'
+            }
+        }], {
+            margin: {t: 10, b: 40, l: 40, r: 10},
+            xaxis: {title: 'Department'},
+            yaxis: {title: 'Number of Events'}
+        });
+
+        // Events Timeline Chart using Chart.js
+        // Clear previous chart if exists
+        const timelineContainer = document.getElementById('events-timeline-chart');
+        timelineContainer.innerHTML = '';
+        
+        const timelineCtx = document.createElement('canvas');
+        timelineCtx.id = 'timeline-canvas';
+        timelineContainer.appendChild(timelineCtx);
+        
+        new Chart(timelineCtx, {
+            type: 'line',
+            data: {
+                labels: dashboardData.monthlyEvents.map(item => item.month),
+                datasets: [{
+                    label: 'Events',
+                    data: dashboardData.monthlyEvents.map(item => item.count),
+                    borderColor: '#4bc0c0',
+                    backgroundColor: 'rgba(75, 192, 192, 0.1)',
+                    tension: 0.3,
+                    fill: true
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        display: false
+                    }
+                },
+                scales: {
+                    y: {
+                    beginAtZero: true,
+                    title: {
+                        display: true,
+                        text: 'Number of Events'
+                    }
+                }
+            }
+        }
+    });
+
+        // Budget Distribution Chart using Plotly
+        const budgetLabels = Object.keys(dashboardData.budgetByDepartment);
+        const budgetValues = Object.values(dashboardData.budgetByDepartment);
+        
+        Plotly.newPlot('budget-distribution-chart', [{
+            x: budgetLabels,
+            y: budgetValues,
+            type: 'bar',
+            marker: {
+                color: ['#FF6384', '#36A2EB', '#FFCE56', '#4BC0C0', '#9966FF']
+            }
+        }], {
+            margin: {t: 10, b: 40, l: 60, r: 10},
+            xaxis: {title: 'Department'},
+            yaxis: {title: 'Budget Amount (₹)'}
+        });
+
+        // Event Mode Distribution Chart using Plotly
+        const modeLabels = Object.keys(dashboardData.eventModes);
+        const modeValues = Object.values(dashboardData.eventModes);
+    
+    Plotly.newPlot('event-mode-chart', [{
+        labels: modeLabels,
+        values: modeValues,
+        type: 'pie',
+        marker: {
+            colors: ['#36A2EB', '#FF6384']
+        }
+    }], {
+        margin: {t: 10, b: 10, l: 10, r: 10}
+    });
+
+    // Function to refresh data periodically
+    function refreshDashboardData() {
+        fetchDashboardData();
+        console.log('Dashboard data refreshed');
+    }
+
+    // Refresh data every 5 minutes
+    setInterval(refreshDashboardData, 300000);
+    }
+    
+    // Initial UI update
+    updateDashboardUI();
+</script>
+{% endblock %}
+
+{% block powerbi_js %}
+<!-- PowerBI JavaScript SDK -->
+<script src="https://microsoft.github.io/PowerBI-JavaScript/demo/node_modules/powerbi-client/dist/powerbi.min.js"></script>
+<script>
+    // PowerBI Embed Configuration for Principal Dashboard
+    const config = {
+        type: 'report',
+        tokenType: 'Embed',
+        accessToken: '{{ powerbi_access_token }}',
+        embedUrl: '{{ powerbi_embed_url }}',
+        id: '{{ powerbi_report_id }}',
+        permissions: 'View',
+        settings: {
+            filterPaneEnabled: true,
+            navContentPaneEnabled: true,
+            background: models.BackgroundType.Transparent,
+            layoutType: models.LayoutType.Custom,
+            customLayout: {
+                displayOption: models.DisplayOption.FitToWidth
+            }
+        },
+        filters: [
+            {
+                $schema: "http://powerbi.com/product/schema#basic",
+                target: {
+                    table: "Users",
+                    column: "role"
+                },
+                operator: "In",
+                values: ["PRINCIPAL"]
+            }
+        ]
+    };
+
+    // Embed the report
+    const reportContainer = document.getElementById('powerbi-container');
+    const report = powerbi.embed(reportContainer, config);
+
+    // Handle report events
+    report.on('loaded', function() {
+        console.log('Principal dashboard loaded successfully');
+    });
+
+    report.on('error', function(event) {
+        console.error('Error loading principal dashboard:', event.detail);
+    });
+
+    // Refresh data periodically
+    setInterval(function() {
+        report.refresh()
+            .then(function() {
+                console.log('Dashboard data refreshed');
+            })
+            .catch(function(error) {
+                console.error('Error refreshing data:', error);
+            });
+    }, 300000); // Refresh every 5 minutes
+</script>
+{% endblock %}

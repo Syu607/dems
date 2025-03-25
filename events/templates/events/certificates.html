@@ -1,0 +1,152 @@
+{% extends 'users/base_dashboard.html' %}
+
+{% block title %}Certificates - CMRIT EMS{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    {% csrf_token %}
+    <div class="row mb-4">
+        <div class="col-md-12">
+            <h2 class="mb-0">Certificates</h2>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-md-12">
+            <div class="card">
+                <div class="card-body">
+                    {% if events %}
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th>Event ID</th>
+                                    <th>Event Name</th>
+                                    <th>Date</th>
+                                    <th>Department</th>
+                                    {% if user.role == 'EVENT_COORDINATOR' %}
+                                    <th>Participants</th>
+                                    {% endif %}
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for event in events %}
+                                <tr>
+                                    <td>{{ event.event_id }}</td>
+                                    <td>{{ event.event_name }}</td>
+                                    <td>{{ event.date }}</td>
+                                    <td>{{ event.get_department_display }}</td>
+                                    {% if user.role == 'EVENT_COORDINATOR' %}
+                                    <td>{{ event.registrations.count }}</td>
+                                    {% endif %}
+                                    <td>
+                                        {% if user.role == 'EVENT_COORDINATOR' %}
+                                        <a href="javascript:void(0)" class="btn btn-sm btn-primary view-participants" data-event-id="{{ event.id }}" data-bs-toggle="modal" data-bs-target="#participantsModal">
+                                            <i class="fas fa-users"></i> View Participants
+                                        </a>
+                                        {% else %}
+                                        {% with registration=event.registrations.all %}{% with registration=registration|first %}
+                                        {% if registration and registration.certificate_generated %}
+                                        <div class="btn-group">
+                                            <a href="{{ registration.certificate_url }}" class="btn btn-sm btn-success" target="_blank">
+                                                <i class="fas fa-download"></i> Download Certificate
+                                            </a>
+                                            <a href="{% url 'submit_feedback' event.id %}" class="btn btn-sm btn-primary">
+                                                <i class="fas fa-comment"></i> Give Feedback
+                                            </a>
+                                        </div>
+                                        {% else %}
+                                        <button class="btn btn-sm btn-secondary" disabled>
+                                            <i class="fas fa-certificate"></i> Not Available
+                                        </button>
+                                        {% endif %}
+                                        {% endwith %}{% endwith %}
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    {% else %}
+                    <div class="text-center py-4">
+                        <i class="fas fa-certificate fa-3x text-muted mb-3"></i>
+                        <h5 class="text-muted">No certificates available</h5>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Participants Modal -->
+{% if user.role == 'EVENT_COORDINATOR' %}
+<div class="modal fade" id="participantsModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Event Participants</h5>
+                <button type="button" class="close" data-bs-dismiss="modal">
+                    <span>&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div id="participantsList">
+                    <!-- Participants will be loaded here -->
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
+{% endblock %}
+
+{% block extra_js %}
+{% if user.role == 'EVENT_COORDINATOR' %}
+<script>
+    $(document).ready(function() {
+        // View participants - fetch real-time certificate status from database
+        $('.view-participants').click(function() {
+            const eventId = $(this).data('event-id');
+            
+            // Fetch participants data with real-time certificate status
+            $.ajax({
+                url: `/events/api/event/${eventId}/participants/`,
+                type: 'GET',
+                success: function(response) {
+                    console.log('Response:', response);
+                    if (response.participants && response.participants.length > 0) {
+                        let html = '<table class="table table-hover"><thead><tr><th>Student ID</th><th>Name</th><th>Email</th><th>Certificate Status</th></tr></thead><tbody>';
+                        
+                        response.participants.forEach(function(participant) {
+                            html += `<tr>
+                                <td>${participant.student_id}</td>
+                                <td>${participant.name}</td>
+                                <td>${participant.email}</td>
+                                <td>${participant.certificate_generated ? 
+                                    '<span class="badge bg-success text-white">Generated</span>' : 
+                                    '<span class="badge bg-warning text-dark">Pending</span>'}</td>
+                            </tr>`;
+                        });
+                        
+                        html += '</tbody></table>';
+                        $('#participantsList').html(html);
+                    } else {
+                        $('#participantsList').html('<div class="alert alert-info">No participants registered for this event.</div>');
+                    }
+                },
+                error: function(xhr, status, error) {
+                    console.error('AJAX Error:', status, error);
+                    $('#participantsList').html('<div class="alert alert-danger">Error loading participants. Please try again.</div>');
+                }
+            });
+        });
+    });
+</script>
+{% endif %}
+{% endblock %}

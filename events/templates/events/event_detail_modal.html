@@ -1,0 +1,62 @@
+<div class="container-fluid" data-event-id="{{ event.event_id }}">
+    <div class="row">
+        <div class="col-md-12">
+            <h4>{{ event.title }}</h4>
+            <hr>
+            <div class="row">
+                <div class="col-md-6">
+                    <p><strong>Event ID:</strong> {{ event.event_id }}</p>
+                    <p><strong>Department:</strong> {{ event.get_department_display }}</p>
+                    <p><strong>Coordinator:</strong> {{ event.coordinator.get_full_name }}</p>
+                    <p><strong>Date:</strong> {{ event.date }}</p>
+                    <p><strong>Time:</strong> {{ event.time }}</p>
+                    <p><strong>Mode:</strong> {{ event.get_mode_display }}</p>
+                    {% if event.mode == 'OFFLINE' %}
+                    <p><strong>Venue:</strong> {{ event.venue }}</p>
+                    {% endif %}
+                </div>
+                <div class="col-md-6">
+                    <p><strong>Expected Attendees:</strong> {{ event.expected_attendees }}</p>
+                    <p><strong>Budget:</strong> ₹{{ event.budget }}</p>
+                    <p><strong>Registration Fee:</strong> ₹{{ event.registration_fee }}</p>
+                    <p><strong>Refreshment:</strong> ₹{{ event.refreshment }}</p>
+                    <p><strong>Renumeration:</strong> ₹{{ event.renumeration }}</p>
+                    <p><strong>Honorarium:</strong> ₹{{ event.honorarium }}</p>
+                </div>
+            </div>
+            <div class="row mt-3">
+                <div class="col-md-12">
+                    <h5>About the Event</h5>
+                    <p>{{ event.about }}</p>
+                    {% if event.other_requirements %}
+                    <h5>Other Requirements</h5>
+                    <p>{{ event.other_requirements }}</p>
+                    {% endif %}
+                </div>
+            </div>
+            
+            <!-- Action Buttons for HOD/Principal -->
+            {% if user.role == 'HOD' and event.status == 'PENDING' or user.role == 'PRINCIPAL' and event.status == 'HOD_APPROVED' %}
+            <div class="row mt-4">
+                <div class="col-md-12 text-center">
+                    <form method="post" action="/events/api/event/{{ event.event_id }}/approve/" class="d-inline">
+                        {% csrf_token %}
+                        <button type="submit" class="btn btn-success mr-2">
+                            <i class="fas fa-check"></i> Approve
+                        </button>
+                    </form>
+                    <form method="post" action="/events/api/event/{{ event.event_id }}/reject/" class="d-inline">
+                        {% csrf_token %}
+                        <div class="form-group d-inline-block mr-2">
+                            <input type="text" name="remarks" class="form-control" placeholder="Reason for rejection" required>
+                        </div>
+                        <button type="submit" class="btn btn-danger">
+                            <i class="fas fa-times"></i> Reject
+                        </button>
+                    </form>
+                </div>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>

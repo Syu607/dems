@@ -1,0 +1,10 @@
+<svg width="200" height="100" xmlns="http://www.w3.org/2000/svg">
+  <title>HOD Signature</title>
+  <style>
+    .signature { stroke: #000; fill: none; stroke-width: 2; }
+    .title { font-family: Arial; font-size: 12px; text-anchor: middle; }
+  </style>
+  <path class="signature" d="M30,50 C40,30 50,60 60,40 C70,20 80,50 90,30 C100,50 110,30 120,50 C130,30 140,60 150,40" />
+  <path class="signature" d="M40,70 C60,60 80,70 100,60 C120,50 140,60 160,50" />
+  <text x="100" y="95" class="title">HOD, Department</text>
+</svg>

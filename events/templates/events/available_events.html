@@ -1,0 +1,47 @@
+{% extends 'users/base_dashboard.html' %}
+
+{% block title %}Available Events - CMRIT EMS{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <h2 class="mb-4">Available Events</h2>
+    
+    {% if events %}
+    <div class="row">
+        {% for event in events %}
+        <div class="col-md-6 mb-4">
+            <div class="card h-100">
+                <div class="card-body">
+                    <h5 class="card-title">{{ event.event_name }}</h5>
+                    <h6 class="card-subtitle mb-2 text-muted">{{ event.department }}</h6>
+                    
+                    <div class="mt-3">
+                        <p><i class="fas fa-calendar"></i> Date: {{ event.date }}</p>
+                        <p><i class="fas fa-clock"></i> Time: {{ event.time }}</p>
+                        <p><i class="fas fa-map-marker-alt"></i> Mode: {{ event.get_mode_display }}</p>
+                        {% if event.venue %}
+                        <p><i class="fas fa-location-dot"></i> Venue: {{ event.venue }}</p>
+                        {% endif %}
+                        <p><i class="fas fa-money-bill"></i> Registration Fee: ₹{{ event.registration_fee }}</p>
+                    </div>
+                    
+                    <div class="mt-3">
+                        <a href="{% url 'event_detail' event.event_id %}" class="btn btn-primary">View Details</a>
+                        {% if not event in registered_events %}
+                        <a href="{% url 'register_event' event.event_id %}" class="btn btn-success">Register</a>
+                        {% else %}
+                        <button class="btn btn-secondary" disabled>Already Registered</button>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    {% else %}
+    <div class="alert alert-info">
+        <p>No events are currently available for registration.</p>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

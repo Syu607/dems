@@ -1,0 +1,323 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Dashboard - CMRIT EMS{% endblock %}</title>
+    <link rel="favicon" href="/static/favicon.ico" type="image/x-icon">
+    <link rel="shortcut icon" href="/static/favicon.ico" type="image/x-icon">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+    <style>
+        :root {
+            --sidebar-width: 250px;
+            --header-height: 60px;
+            --primary-color: #269bd8;
+            --secondary-color: #c36;
+            --sidebar-bg: #2c3e50;
+            --sidebar-text: #ecf0f1;
+        }
+        body {
+            min-height: 100vh;
+            background-color: #f8f9fa;
+        }
+        .sidebar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: var(--sidebar-width);
+            height: 100vh;
+            background-color: var(--sidebar-bg);
+            color: var(--sidebar-text);
+            padding: 1rem;
+            overflow-y: auto;
+            z-index: 1000;
+        }
+        .main-content {
+            margin-left: var(--sidebar-width);
+            padding: 1rem;
+            min-height: 100vh;
+        }
+        .top-header {
+            height: var(--header-height);
+            background-color: var(--primary-color);
+            border-bottom: 1px solid #dee2e6;
+            padding: 0.5rem 1rem;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            color: white;
+        }
+        .user-profile {
+            text-align: center;
+            padding: 1.5rem 0;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+        }
+        .user-profile img {
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            margin-bottom: 1rem;
+        }
+        .nav-link {
+            color: var(--sidebar-text);
+            padding: 0.75rem 1rem;
+            margin: 0.2rem 0;
+            border-radius: 0.25rem;
+            transition: all 0.3s;
+        }
+        .nav-link:hover, .nav-link.active {
+            background-color: var(--secondary-color);
+            color: white;
+        }
+        .nav-link i {
+            width: 20px;
+            margin-right: 10px;
+        }
+        .search-box {
+            max-width: 400px;
+            width: 100%;
+        }
+        .notification-badge {
+            position: absolute;
+            top: -5px;
+            right: -5px;
+            padding: 0.25rem 0.5rem;
+            border-radius: 50%;
+            font-size: 0.75rem;
+            background-color: #dc3545;
+            color: white;
+        }
+        @media (max-width: 768px) {
+            .sidebar {
+                transform: translateX(-100%);
+                transition: transform 0.3s;
+            }
+            .sidebar.show {
+                transform: translateX(0);
+            }
+            .main-content {
+                margin-left: 0;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Sidebar -->
+    <div class="sidebar">
+        <!-- User Profile -->
+        <div class="user-profile">
+            <img src="{{ STATIC_URL }}images/default-user.png" alt="User Profile" style="width: 80px; height: 80px;"/>
+            <h6 class="mb-0">{{ user.get_full_name }}</h6>
+            <small class="text-muted">{{ user.get_role_display }}</small>
+        </div>
+
+        <!-- Navigation Menu -->
+        <nav class="mt-4">
+            <a href="{% url 'dashboard' %}" class="nav-link {% if request.resolver_match.url_name == 'dashboard' %}active{% endif %}">
+                <i class="fas fa-tachometer-alt"></i> Dashboard
+            </a>
+            {% if user.role == 'EVENT_COORDINATOR' %}
+            <a href="{% url 'create_event' %}" class="nav-link {% if request.resolver_match.url_name == 'create_event' %}active{% endif %}">
+                <i class="fas fa-plus-circle"></i> Create Event
+            </a>
+            <a href="{% url 'my_events' %}" class="nav-link {% if request.resolver_match.url_name == 'my_events' %}active{% endif %}">
+                <i class="fas fa-calendar-alt"></i> My Events
+            </a>
+            <a href="{% url 'event_scheduler' %}" class="nav-link {% if request.resolver_match.url_name == 'event_scheduler' %}active{% endif %}">
+                <i class="fas fa-clock"></i> Event Scheduler
+            </a>
+            <a href="{% url 'assessment_list' %}" class="nav-link {% if request.resolver_match.url_name == 'assessment_list' %}active{% endif %}">
+                <i class="fas fa-tasks"></i> Assessments
+            </a>
+            <a href="{% url 'certificates' %}" class="nav-link {% if request.resolver_match.url_name == 'certificates' %}active{% endif %}">
+                <i class="fas fa-certificate"></i> Certificates
+            </a>
+            <a href="{% url 'upload_material' %}" class="nav-link {% if request.resolver_match.url_name == 'upload_material' %}active{% endif %}">
+                <i class="fas fa-upload"></i> Upload Study Materials
+            </a>
+            <a href="{% url 'view_materials' %}" class="nav-link {% if request.resolver_match.url_name == 'view_materials' %}active{% endif %}">
+                <i class="fas fa-file-pdf"></i> Study Materials
+            </a>
+            {% endif %}
+            {% if user.role == 'STUDENT' %}
+            <a href="{% url 'available_events' %}" class="nav-link {% if request.resolver_match.url_name == 'available_events' %}active{% endif %}">
+                <i class="fas fa-calendar-alt"></i> Available Events
+            </a>
+            <a href="{% url 'student_assessment_list' %}" class="nav-link {% if request.resolver_match.url_name == 'student_assessment_list' %}active{% endif %}">
+                <i class="fas fa-tasks"></i> My Assessments
+            </a>
+            <a href="{% url 'certificates' %}" class="nav-link {% if request.resolver_match.url_name == 'certificates' %}active{% endif %}">
+                <i class="fas fa-certificate"></i> My Certificates
+            </a>
+            <a href="{% url 'upload_material' %}" class="nav-link {% if request.resolver_match.url_name == 'upload_material' %}active{% endif %}">
+                <i class="fas fa-upload"></i> Upload Study Materials
+            </a>
+            <a href="{% url 'view_materials' %}" class="nav-link {% if request.resolver_match.url_name == 'view_materials' %}active{% endif %}">
+                <i class="fas fa-file-pdf"></i> Study Materials
+            </a>
+            {% endif %}
+            {% if user.role == 'HOD' or user.role == 'PRINCIPAL' %}
+            <a href="{% url 'event_approval_list' %}" class="nav-link {% if request.resolver_match.url_name == 'event_approval_list' %}active{% endif %}">
+                <i class="fas fa-check-circle"></i> Event Approvals
+            </a>
+            {% endif %}
+            <a href="{% url 'logout' %}" class="nav-link">
+                <i class="fas fa-sign-out-alt"></i> Logout
+            </a>
+        </nav>
+    </div>
+
+    <!-- Main Content -->
+    <div class="main-content">
+        <!-- Top Header -->
+        <div class="top-header">
+            <button class="btn d-md-none text-white" id="sidebarToggle">
+                <i class="fas fa-bars"></i>
+            </button>
+            <div class="d-flex align-items-center">
+                <img src="/static/images/logo.png" alt="CMRIT Logo" style="height: 40px; margin-right: 15px;">
+                <h4 class="mb-0">CMRIT Event Management System</h4>
+            </div>
+            <div class="d-flex align-items-center">
+                <div class="dropdown">
+                    <img src="{{ STATIC_URL }}images/default-user.png" class="rounded-circle" alt="User" style="width: 32px; height: 32px;"/>
+                </div>
+            </div>
+        </div>
+
+        <!-- Page Content -->
+        <div class="container-fluid py-4">
+            {% if messages %}
+            <div class="messages mb-4">
+                {% for message in messages %}
+                <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+                    {{ message }}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+                {% endfor %}
+            </div>
+            {% endif %}
+            {% block content %}{% endblock %}
+        </div>
+        
+        <!-- Footer -->
+        <footer class="mt-5 py-3 text-center" style="background-color: #f8f9fa; border-top: 1px solid #dee2e6;">
+            <div class="container">
+                <p class="mb-0">&copy; {% now "Y" %} CMRIT Event Management System. All rights reserved.</p>
+                <p class="small text-muted mb-0">Developed for CMR Institute of Technology</p>
+            </div>
+        </footer>
+    </div>
+
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@3.7.1/dist/chart.min.js"></script>
+    <script src="https://cdn.plot.ly/plotly-2.14.0.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/d3@7"></script>
+    <script>
+        document.getElementById('sidebarToggle').addEventListener('click', function() {
+            document.querySelector('.sidebar').classList.toggle('show');
+        });
+        
+        // Session timeout handling
+        (function() {
+            // Session timeout is set to 30 minutes (1800 seconds) in settings.py
+            const sessionTimeoutMs = 1800 * 1000; // Convert to milliseconds
+            const warningTimeMs = 60 * 1000; // Show warning 1 minute before timeout
+            
+            let sessionTimer;
+            let warningTimer;
+            
+            function resetSessionTimers() {
+                clearTimeout(sessionTimer);
+                clearTimeout(warningTimer);
+                
+                // Set timer for warning
+                warningTimer = setTimeout(function() {
+                    showTimeoutWarning();
+                }, sessionTimeoutMs - warningTimeMs);
+                
+                // Set timer for redirect
+                sessionTimer = setTimeout(function() {
+                    window.location.href = "{% url 'login' %}";
+                }, sessionTimeoutMs);
+            }
+            
+            function showTimeoutWarning() {
+                // Create modal if it doesn't exist
+                if (!document.getElementById('sessionTimeoutModal')) {
+                    const modal = document.createElement('div');
+                    modal.className = 'modal fade';
+                    modal.id = 'sessionTimeoutModal';
+                    modal.setAttribute('tabindex', '-1');
+                    modal.setAttribute('aria-labelledby', 'sessionTimeoutModalLabel');
+                    modal.setAttribute('aria-hidden', 'true');
+                    
+                    modal.innerHTML = `
+                        <div class="modal-dialog">
+                            <div class="modal-content">
+                                <div class="modal-header bg-warning text-white">
+                                    <h5 class="modal-title" id="sessionTimeoutModalLabel">
+                                        <i class="fas fa-exclamation-triangle me-2"></i>Session Timeout Warning
+                                    </h5>
+                                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                                </div>
+                                <div class="modal-body">
+                                    <p>Your session is about to expire due to inactivity.</p>
+                                    <p>You will be logged out in <span id="countdownTimer">60</span> seconds.</p>
+                                    <p>Click "Continue Session" to stay logged in.</p>
+                                </div>
+                                <div class="modal-footer">
+                                    <button type="button" class="btn btn-primary" id="continueSessionBtn">Continue Session</button>
+                                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Logout Now</button>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                    
+                    document.body.appendChild(modal);
+                    
+                    // Add event listener to continue session button
+                    document.getElementById('continueSessionBtn').addEventListener('click', function() {
+                        // Hide modal
+                        const modalInstance = bootstrap.Modal.getInstance(document.getElementById('sessionTimeoutModal'));
+                        modalInstance.hide();
+                        
+                        // Reset timers
+                        resetSessionTimers();
+                    });
+                }
+                
+                // Show modal
+                const sessionTimeoutModal = new bootstrap.Modal(document.getElementById('sessionTimeoutModal'));
+                sessionTimeoutModal.show();
+                
+                // Start countdown
+                let countdown = 60;
+                const countdownTimer = document.getElementById('countdownTimer');
+                const countdownInterval = setInterval(function() {
+                    countdown--;
+                    countdownTimer.textContent = countdown;
+                    
+                    if (countdown <= 0) {
+                        clearInterval(countdownInterval);
+                    }
+                }, 1000);
+            }
+            
+            // Reset timers on user activity
+            const events = ['mousedown', 'mousemove', 'keypress', 'scroll', 'touchstart'];
+            events.forEach(function(event) {
+                document.addEventListener(event, function() {
+                    resetSessionTimers();
+                }, false);
+            });
+            
+            // Initialize timers when page loads
+            resetSessionTimers();
+        })();
+    </script>
+    {% block extra_js %}{% endblock %}
+</body>
+</html>

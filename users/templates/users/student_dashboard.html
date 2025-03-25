@@ -1,0 +1,279 @@
+{% extends 'users/base_dashboard.html' %}
+
+{% block title %}Student Dashboard - CMRIT EMS{% endblock %}
+
+{% block nav_items %}
+<li class="nav-item">
+    <a class="nav-link" href="{% url 'available_events' %}">
+        <i class="fas fa-calendar-alt"></i> Available Events
+    </a>
+</li>
+<li class="nav-item">
+    <a class="nav-link" href="{% url 'student_assessment_list' %}">
+        <i class="fas fa-tasks"></i> My Assessments
+    </a>
+</li>
+<li class="nav-item">
+    <a class="nav-link" href="{% url 'certificates' %}">
+        <i class="fas fa-certificate"></i> My Certificates
+    </a>
+</li>
+<li class="nav-item">
+    <a class="nav-link" href="{% url 'view_materials' %}">
+        <i class="fas fa-file-pdf"></i> Study Materials
+    </a>
+</li>
+{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-md-3 mb-4">
+        <div class="card bg-primary text-white h-100">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h6 class="card-title">Registered Events</h6>
+                        <h2 class="mb-0" id="registered-events-count">0</h2>
+                    </div>
+                    <i class="fas fa-calendar-check fa-2x"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3 mb-4">
+        <div class="card bg-warning text-white h-100">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h6 class="card-title">Pending Assessments</h6>
+                        <h2 class="mb-0" id="pending-assessments-count">0</h2>
+                    </div>
+                    <i class="fas fa-tasks fa-2x"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3 mb-4">
+        <div class="card bg-success text-white h-100">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h6 class="card-title">Certificates Earned</h6>
+                        <h2 class="mb-0" id="certificates-count">0</h2>
+                    </div>
+                    <i class="fas fa-certificate fa-2x"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3 mb-4">
+        <div class="card bg-info text-white h-100">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h6 class="card-title">Feedback Given</h6>
+                        <h2 class="mb-0" id="feedback-given-count">0</h2>
+                    </div>
+                    <i class="fas fa-comment fa-2x"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-md-8 mb-4">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title mb-0">Upcoming Events</h5>
+            </div>
+            <div class="card-body" id="upcoming-events-container">
+                <p class="text-muted text-center mb-0" id="no-upcoming-events">No upcoming events found</p>
+                <div id="upcoming-events-list" class="d-none">
+                    <!-- Upcoming events will be populated here -->
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4 mb-4">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title mb-0">Due Assessments</h5>
+            </div>
+            <div class="card-body" id="pending-assessments-container">
+                <p class="text-muted text-center mb-0" id="no-pending-assessments">No pending assessments</p>
+                <div id="pending-assessments-list" class="d-none">
+                    <!-- Pending assessments will be populated here -->
+                </div>
+            </div>
+        </div>
+        <div class="card mt-4">
+            <div class="card-header">
+                <h5 class="card-title mb-0">Monthly Participation</h5>
+            </div>
+            <div class="card-body">
+                <div id="monthly-participation-chart" style="height: 200px;"></div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+{% block extra_js %}
+<script>
+    // Initialize data object
+    let dashboardData = {
+        registeredEvents: 0,
+        upcomingEvents: [],
+        pendingAssessments: [],
+        certificates: 0,
+        avgScore: 0,
+        feedbackGiven: 0,
+        monthlyParticipation: [
+            {month: 'Jan', count: 0},
+            {month: 'Feb', count: 0},
+            {month: 'Mar', count: 0},
+            {month: 'Apr', count: 0},
+            {month: 'May', count: 0},
+            {month: 'Jun', count: 0},
+            {month: 'Jul', count: 0},
+            {month: 'Aug', count: 0},
+            {month: 'Sep', count: 0},
+            {month: 'Oct', count: 0},
+            {month: 'Nov', count: 0},
+            {month: 'Dec', count: 0}
+        ]
+    };
+    
+    // Function to fetch real-time data from API
+    function fetchDashboardData() {
+        fetch('/events/api/dashboard/student/')
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    dashboardData = data;
+                    updateDashboardUI();
+                } else {
+                    console.error('Error fetching dashboard data:', data.message);
+                }
+            })
+            .catch(error => {
+                console.error('Error fetching dashboard data:', error);
+            });
+    }
+    
+    // Initial data fetch
+    fetchDashboardData();
+
+    // Function to update all UI elements with the latest data
+    function updateDashboardUI() {
+        // Update dashboard counters
+        document.getElementById('registered-events-count').textContent = dashboardData.registeredEvents;
+        document.getElementById('pending-assessments-count').textContent = dashboardData.pendingAssessments.length;
+        document.getElementById('certificates-count').textContent = dashboardData.certificates;
+        document.getElementById('feedback-given-count').textContent = dashboardData.feedbackGiven || 0;
+        
+        // Update upcoming events
+        const upcomingEventsContainer = document.getElementById('upcoming-events-container');
+        const noUpcomingEvents = document.getElementById('no-upcoming-events');
+        const upcomingEventsList = document.getElementById('upcoming-events-list');
+        
+        if (dashboardData.upcomingEvents && dashboardData.upcomingEvents.length > 0) {
+            noUpcomingEvents.classList.add('d-none');
+            upcomingEventsList.classList.remove('d-none');
+            upcomingEventsList.innerHTML = '';
+            
+            dashboardData.upcomingEvents.forEach(event => {
+                const eventCard = document.createElement('div');
+                eventCard.className = 'card mb-2';
+                eventCard.innerHTML = `
+                    <div class="card-body py-2">
+                        <h6 class="card-title mb-1">${event.name}</h6>
+                        <div class="d-flex justify-content-between align-items-center">
+                            <small class="text-muted">
+                                <i class="fas fa-calendar-day"></i> ${event.date}
+                            </small>
+                            <small class="text-muted">
+                                <i class="fas fa-clock"></i> ${event.time}
+                            </small>
+                        </div>
+                        <div class="d-flex justify-content-between align-items-center mt-1">
+                            <small class="text-muted">
+                                <i class="fas fa-map-marker-alt"></i> ${event.venue}
+                            </small>
+                            <small class="badge ${event.mode === 'Online' ? 'bg-info' : 'bg-success'} text-white">
+                                ${event.mode}
+                            </small>
+                        </div>
+                    </div>
+                `;
+                upcomingEventsList.appendChild(eventCard);
+            });
+        } else {
+            noUpcomingEvents.classList.remove('d-none');
+            upcomingEventsList.classList.add('d-none');
+        }
+        
+        // Update pending assessments
+        const pendingAssessmentsContainer = document.getElementById('pending-assessments-container');
+        const noPendingAssessments = document.getElementById('no-pending-assessments');
+        const pendingAssessmentsList = document.getElementById('pending-assessments-list');
+        
+        if (dashboardData.pendingAssessments && dashboardData.pendingAssessments.length > 0) {
+            noPendingAssessments.classList.add('d-none');
+            pendingAssessmentsList.classList.remove('d-none');
+            pendingAssessmentsList.innerHTML = '';
+            
+            dashboardData.pendingAssessments.forEach(assessment => {
+                const assessmentItem = document.createElement('div');
+                assessmentItem.className = 'card mb-2';
+                assessmentItem.innerHTML = `
+                    <div class="card-body py-2">
+                        <h6 class="card-title mb-1">${assessment.title}</h6>
+                        <small class="text-muted d-block">
+                            <i class="fas fa-calendar-alt"></i> ${assessment.event}
+                        </small>
+                        <div class="d-flex justify-content-between align-items-center mt-1">
+                            <small class="text-danger">
+                                <i class="fas fa-clock"></i> Due: ${assessment.due_date}
+                            </small>
+                            <a href="/events/submit-assessment/${assessment.id}/" class="btn btn-sm btn-primary">Submit</a>
+                        </div>
+                    </div>
+                `;
+                pendingAssessmentsList.appendChild(assessmentItem);
+            });
+        } else {
+            noPendingAssessments.classList.remove('d-none');
+            pendingAssessmentsList.classList.add('d-none');
+        }
+        
+        // Monthly Participation Chart using Plotly
+        const monthlyData = dashboardData.monthlyParticipation || [];
+        
+        Plotly.newPlot('monthly-participation-chart', [{
+            x: monthlyData.map(item => item.month),
+            y: monthlyData.map(item => item.count),
+            type: 'bar',
+            marker: {
+                color: '#4BC0C0'
+            }
+        }], {
+            margin: {t: 10, b: 30, l: 30, r: 10},
+            xaxis: {title: ''},
+            yaxis: {title: ''}
+        });
+    }
+
+    // Function to refresh data periodically
+    function refreshDashboardData() {
+        fetchDashboardData();
+        console.log('Dashboard data refreshed');
+    }
+
+    // Refresh data every 5 minutes
+    setInterval(refreshDashboardData, 300000);
+    
+    // Initial UI update
+    updateDashboardUI();
+</script>
+{% endblock %}

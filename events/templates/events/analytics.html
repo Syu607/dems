@@ -1,0 +1,90 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="container mt-4">
+    <h2>Event Analytics Dashboard</h2>
+    
+    <!-- Summary Cards -->
+    <div class="row mb-4">
+        <div class="col-md-3">
+            <div class="card">
+                <div class="card-body">
+                    <h5 class="card-title">Total Events</h5>
+                    <h2 class="card-text">{{ total_events }}</h2>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card">
+                <div class="card-body">
+                    <h5 class="card-title">Approved Events</h5>
+                    <h2 class="card-text">{{ approved_events }}</h2>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card">
+                <div class="card-body">
+                    <h5 class="card-title">Pending Events</h5>
+                    <h2 class="card-text">{{ pending_events }}</h2>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card">
+                <div class="card-body">
+                    <h5 class="card-title">Total Budget</h5>
+                    <h2 class="card-text">₹{{ total_budget }}</h2>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Department Statistics -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-body">
+                    <h5 class="card-title">Department Statistics</h5>
+                    <div class="table-responsive">
+                        <table class="table">
+                            <thead>
+                                <tr>
+                                    <th>Department</th>
+                                    <th>Events Count</th>
+                                    <th>Avg. Expected Attendees</th>
+                                    <th>Total Budget</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for stat in dept_stats %}
+                                <tr>
+                                    <td>{{ stat.department__name }}</td>
+                                    <td>{{ stat.event_count }}</td>
+                                    <td>{{ stat.avg_attendees|floatformat:0 }}</td>
+                                    <td>₹{{ stat.total_dept_budget }}</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Assessment Statistics -->
+    <div class="row mb-4">
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-body">
+                    <h5 class="card-title">Assessment Overview</h5>
+                    <p>Total Assessments: {{ total_assessments }}</p>
+                    <p>Submission Rate: {{ submission_rate }}%</p>
+                    <p>Average Score: {{ avg_score }}%</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

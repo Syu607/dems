@@ -1,0 +1,10 @@
+<svg width="200" height="100" xmlns="http://www.w3.org/2000/svg">
+  <title>Principal Signature</title>
+  <style>
+    .signature { stroke: #000; fill: none; stroke-width: 2; }
+    .title { font-family: Arial; font-size: 12px; text-anchor: middle; }
+  </style>
+  <path class="signature" d="M20,70 C30,50 40,80 50,60 C60,40 70,70 80,50 C90,30 100,60 110,40 C120,20 130,50 140,30 C150,50 160,30 170,50" />
+  <path class="signature" d="M30,80 C40,70 60,80 80,70 C100,60 120,70 140,60 C160,50 180,60 190,50" />
+  <text x="100" y="95" class="title">Principal, CMRIT</text>
+</svg>

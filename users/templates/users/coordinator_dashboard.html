@@ -1,0 +1,371 @@
+{% extends 'users/base_dashboard.html' %}
+
+{% block title %}Coordinator Dashboard - CMRIT EMS{% endblock %}
+
+{% block nav_items %}
+<li class="nav-item">
+    <a class="nav-link" href="{% url 'create_event' %}">
+        <i class="fas fa-plus-circle"></i> Create Event
+    </a>
+</li>
+<li class="nav-item">
+    <a class="nav-link" href="{% url 'my_events' %}">
+        <i class="fas fa-calendar-alt"></i> My Events
+    </a>
+</li>
+<li class="nav-item">
+    <a class="nav-link" href="{% url 'event_scheduler' %}">
+        <i class="fas fa-clock"></i> Event Scheduler
+    </a>
+</li>
+<li class="nav-item">
+    <a class="nav-link" href="{% url 'assessment_list' %}">
+        <i class="fas fa-tasks"></i> Assessments
+    </a>
+</li>
+<li class="nav-item">
+    <a class="nav-link" href="{% url 'upload_material' %}">
+        <i class="fas fa-file-pdf"></i> Upload Study Materials
+    </a>
+</li>
+<li class="nav-item">
+    <a class="nav-link" href="{% url 'certificates' %}">
+        <i class="fas fa-certificate"></i> Certificates
+    </a>
+</li>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <div class="row mb-4">
+        <div class="col-md-4 mb-4">
+            <div class="card bg-primary text-white h-100">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h6 class="card-title">My Events</h6>
+                            <h2 class="mb-0" id="my-events-count">0</h2>
+                        </div>
+                        <i class="fas fa-calendar-alt fa-2x"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4 mb-4">
+            <div class="card bg-success text-white h-100">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h6 class="card-title">Approved Events</h6>
+                            <h2 class="mb-0" id="approved-events-count">0</h2>
+                        </div>
+                        <i class="fas fa-check-circle fa-2x"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4 mb-4">
+            <div class="card bg-warning text-white h-100">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h6 class="card-title">Pending Events</h6>
+                            <h2 class="mb-0" id="pending-events-count">0</h2>
+                        </div>
+                        <i class="fas fa-hourglass-half fa-2x"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="row">
+        <div class="col-md-6 mb-4">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">Event Participation</h5>
+                </div>
+                <div class="card-body">
+                    <div id="event-participation-chart" style="height: 300px;"></div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6 mb-4">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">Assessment Completion</h5>
+                </div>
+                <div class="card-body">
+                    <div id="assessment-completion-chart" style="height: 300px;"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="row">
+        <div class="col-md-8 mb-4">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">Event Timeline</h5>
+                </div>
+                <div class="card-body">
+                    <div id="event-timeline-chart" style="height: 300px;"></div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4 mb-4">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">Event Feedback</h5>
+                </div>
+                <div class="card-body">
+                    <div id="event-feedback-chart" style="height: 300px;"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // Initialize data object
+    let dashboardData = {
+        myEvents: 0,
+        approvedEvents: 0,
+        pendingEvents: 0,
+        eventParticipation: {},
+        assessmentCompletion: {},
+        eventTimeline: [
+            {month: 'Jan', count: 0},
+            {month: 'Feb', count: 0},
+            {month: 'Mar', count: 0},
+            {month: 'Apr', count: 0},
+            {month: 'May', count: 0},
+            {month: 'Jun', count: 0},
+            {month: 'Jul', count: 0},
+            {month: 'Aug', count: 0},
+            {month: 'Sep', count: 0},
+            {month: 'Oct', count: 0},
+            {month: 'Nov', count: 0},
+            {month: 'Dec', count: 0}
+        ],
+        eventFeedback: {
+            'Excellent': 0,
+            'Good': 0,
+            'Average': 0,
+            'Poor': 0
+        }
+    };
+    
+    // Function to fetch real-time data from API
+    function fetchDashboardData() {
+        fetch('/events/api/dashboard/coordinator/')
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    dashboardData = data;
+                    updateDashboardUI();
+                } else {
+                    console.error('Error fetching dashboard data:', data.message);
+                }
+            })
+            .catch(error => {
+                console.error('Error fetching dashboard data:', error);
+            });
+    }
+    
+    // Initial data fetch
+    fetchDashboardData();
+
+    // Function to update all UI elements with the latest data
+    function updateDashboardUI() {
+        // Update dashboard counters
+        document.getElementById('my-events-count').textContent = dashboardData.myEvents;
+        document.getElementById('approved-events-count').textContent = dashboardData.approvedEvents;
+        document.getElementById('pending-events-count').textContent = dashboardData.pendingEvents;
+        
+        // Event Participation Chart using Plotly
+        const participationLabels = Object.keys(dashboardData.eventParticipation);
+        const participationValues = Object.values(dashboardData.eventParticipation);
+        
+        Plotly.newPlot('event-participation-chart', [{
+            x: participationLabels,
+            y: participationValues,
+            type: 'bar',
+            marker: {
+                color: '#269bd8'
+            }
+        }], {
+            margin: {t: 10, b: 80, l: 40, r: 10},
+            xaxis: {
+                title: 'Event',
+                tickangle: -45
+            },
+            yaxis: {title: 'Number of Participants'}
+        });
+    
+        // Assessment Completion Chart using Plotly
+        const completionLabels = Object.keys(dashboardData.assessmentCompletion);
+        const completionValues = Object.values(dashboardData.assessmentCompletion);
+    
+    Plotly.newPlot('assessment-completion-chart', [{
+        x: completionLabels,
+        y: completionValues,
+        type: 'bar',
+        marker: {
+            color: '#4BC0C0'
+        }
+    }], {
+        margin: {t: 10, b: 80, l: 40, r: 10},
+        xaxis: {
+            title: 'Event',
+            tickangle: -45
+        },
+        yaxis: {
+            title: 'Completion Rate (%)',
+            range: [0, 100]
+        }
+    });
+
+        // Event Timeline Chart using Chart.js
+        // Clear previous chart if exists
+        const timelineContainer = document.getElementById('event-timeline-chart');
+        timelineContainer.innerHTML = '';
+        
+        const timelineCtx = document.createElement('canvas');
+        timelineCtx.id = 'timeline-canvas';
+        timelineContainer.appendChild(timelineCtx);
+        
+        new Chart(timelineCtx, {
+            type: 'line',
+            data: {
+                labels: dashboardData.eventTimeline.map(item => item.month),
+                datasets: [{
+                    label: 'Events',
+                    data: dashboardData.eventTimeline.map(item => item.count),
+                    borderColor: '#4bc0c0',
+                    backgroundColor: 'rgba(75, 192, 192, 0.1)',
+                    tension: 0.3,
+                    fill: true
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        display: false
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        title: {
+                            display: true,
+                            text: 'Number of Events'
+                        },
+                        ticks: {
+                            stepSize: 1
+                        }
+                    }
+                }
+            }
+        });
+    
+        // Event Feedback Chart using Plotly
+        const feedbackLabels = Object.keys(dashboardData.eventFeedback);
+        const feedbackValues = Object.values(dashboardData.eventFeedback);
+    
+    Plotly.newPlot('event-feedback-chart', [{
+        labels: feedbackLabels,
+        values: feedbackValues,
+        type: 'pie',
+        marker: {
+            colors: ['#28A745', '#17A2B8', '#FFC107', '#DC3545']
+        }
+    }], {
+        margin: {t: 10, b: 10, l: 10, r: 10}
+    });
+
+    // Function to refresh data periodically
+    function refreshDashboardData() {
+        fetchDashboardData();
+        console.log('Dashboard data refreshed');
+    }
+
+    // Refresh data every 5 minutes
+    setInterval(refreshDashboardData, 300000);
+    }
+    
+    // Initial UI update
+    updateDashboardUI();
+</script>
+{% endblock %}
+
+<!-- PowerBI JavaScript SDK -->
+<script src="https://microsoft.github.io/PowerBI-JavaScript/demo/node_modules/powerbi-client/dist/powerbi.min.js"></script>
+<script>
+    // PowerBI Embed Configuration for Coordinator Dashboard
+    const config = {
+        type: 'report',
+        tokenType: 'Embed',
+        accessToken: '{{ powerbi_access_token }}',
+        embedUrl: '{{ powerbi_embed_url }}',
+        id: '{{ powerbi_report_id }}',
+        permissions: 'View',
+        settings: {
+            filterPaneEnabled: true,
+            navContentPaneEnabled: true,
+            background: models.BackgroundType.Transparent,
+            layoutType: models.LayoutType.Custom,
+            customLayout: {
+                displayOption: models.DisplayOption.FitToWidth
+            }
+        },
+        filters: [
+            {
+                $schema: "http://powerbi.com/product/schema#basic",
+                target: {
+                    table: "Users",
+                    column: "role"
+                },
+                operator: "In",
+                values: ["EVENT_COORDINATOR"]
+            },
+            {
+                $schema: "http://powerbi.com/product/schema#basic",
+                target: {
+                    table: "Users",
+                    column: "id"
+                },
+                operator: "Equals",
+                values: ["{{ user.id }}"]
+            }
+        ]
+    };
+
+    // Embed the report
+    const reportContainer = document.getElementById('powerbi-container');
+    const report = powerbi.embed(reportContainer, config);
+
+    // Handle report events
+    report.on('loaded', function() {
+        console.log('Coordinator dashboard loaded successfully');
+    });
+
+    report.on('error', function(event) {
+        console.error('Error loading coordinator dashboard:', event.detail);
+    });
+
+    // Refresh data periodically
+    setInterval(function() {
+        report.refresh()
+            .then(function() {
+                console.log('Dashboard data refreshed');
+            })
+            .catch(function(error) {
+                console.error('Error refreshing data:', error);
+            });
+    }, 300000); // Refresh every 5 minutes
+</script>

@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 100">
+  <g>
+    <!-- Leaf elements -->
+    <path d="M100,20 L120,50 L100,80 L80,50 Z" fill="#f39c12"/>
+    <path d="M100,20 L130,40 L120,70 L90,60 Z" fill="#e67e22"/>
+    <path d="M100,20 L70,40 L80,70 L110,60 Z" fill="#d35400"/>
+    
+    <!-- Text -->
+    <text x="100" y="95" font-family="Arial" font-size="10" text-anchor="middle" fill="#333">EXPLORE TO INVENT</text>
+  </g>
+</svg>

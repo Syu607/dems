@@ -1,0 +1,238 @@
+{% extends 'users/base_dashboard.html' %}
+
+{% block title %}Event Feedback Report - CMRIT EMS{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="row mb-4">
+        <div class="col-md-12">
+            <h2 class="mb-0">Feedback Report: {{ event.event_name }}</h2>
+            <p class="text-muted">Event Date: {{ event.date }}</p>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-md-8">
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">Feedback Summary</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div id="rating-chart" style="height: 300px;" 
+                 data-rating-5="{{ rating_5_count|default:0 }}" 
+                 data-rating-4="{{ rating_4_count|default:0 }}" 
+                 data-rating-3="{{ rating_3_count|default:0 }}" 
+                 data-rating-2="{{ rating_2_count|default:0 }}" 
+                 data-rating-1="{{ rating_1_count|default:0 }}">
+                                <!-- Chart will be rendered here -->
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="d-flex flex-column justify-content-center h-100">
+                                <div class="mb-3">
+                                    <h5>Average Rating</h5>
+                                    <h2 class="text-primary">{{ avg_rating|default:0|floatformat:1 }} / 5</h2>
+                                </div>
+                                <div class="mb-3">
+                                    <h5>Total Feedback</h5>
+                                    <h2 class="text-primary">{{ feedback_count|default:0 }}</h2>
+                                </div>
+                                <div>
+                                    <h5>Feedback Rate</h5>
+                                    <h2 class="text-primary">{{ feedback_rate|default:0|floatformat:0 }}%</h2>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">Rating Distribution</h5>
+                </div>
+                <div class="card-body">
+                    <div class="mb-3">
+                        <div class="d-flex justify-content-between">
+                            <span>Excellent (5)</span>
+                            <span>{{ rating_5_count|default:0 }}</span>
+                        </div>
+                        <div class="progress">
+                            <div class="progress-bar bg-success" role="progressbar" style="width: 0%" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100" data-percent="{{ rating_5_percent|default:0|floatformat:0 }}"></div>
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <div class="d-flex justify-content-between">
+                            <span>Very Good (4)</span>
+                            <span>{{ rating_4_count|default:0 }}</span>
+                        </div>
+                        <div class="progress">
+                            <div class="progress-bar bg-info" role="progressbar" style="width: 0%" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100" data-percent="{{ rating_4_percent|default:0|floatformat:0 }}"></div>
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <div class="d-flex justify-content-between">
+                            <span>Good (3)</span>
+                            <span>{{ rating_3_count|default:0 }}</span>
+                        </div>
+                        <div class="progress">
+                            <div class="progress-bar bg-primary" role="progressbar" style="width: 0%" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100" data-percent="{{ rating_3_percent|default:0|floatformat:0 }}"></div>
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <div class="d-flex justify-content-between">
+                            <span>Average (2)</span>
+                            <span>{{ rating_2_count|default:0 }}</span>
+                        </div>
+                        <div class="progress">
+                            <div class="progress-bar bg-warning" role="progressbar" style="width: 0%" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100" data-percent="{{ rating_2_percent|default:0|floatformat:0 }}"></div>
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <div class="d-flex justify-content-between">
+                            <span>Poor (1)</span>
+                            <span>{{ rating_1_count|default:0 }}</span>
+                        </div>
+                        <div class="progress">
+                            <div class="progress-bar bg-danger" role="progressbar" style="width: 0%" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100" data-percent="{{ rating_1_percent|default:0|floatformat:0 }}"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row mt-4">
+        <div class="col-md-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">Feedback Comments</h5>
+                </div>
+                <div class="card-body">
+                    {% if feedbacks %}
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th>Student</th>
+                                    <th>Rating</th>
+                                    <th>Feedback</th>
+                                    <th>Date</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for feedback in feedbacks %}
+                                <tr>
+                                    <td>{{ feedback.student.username }}</td>
+                                    <td>
+                                        <span class="badge {% if feedback.rating >= 4 %}bg-success{% elif feedback.rating == 3 %}bg-primary{% elif feedback.rating == 2 %}bg-warning{% else %}bg-danger{% endif %} text-white">
+                                            {{ feedback.rating }}/5
+                                        </span>
+                                    </td>
+                                    <td>{{ feedback.feedback_text }}</td>
+                                    <td>{{ feedback.submitted_date|date:"M d, Y" }}</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    {% else %}
+                    <div class="text-center py-4">
+                        <i class="fas fa-comment-slash fa-3x text-muted mb-3"></i>
+                        <h5 class="text-muted">No feedback available for this event</h5>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // Initialize progress bars
+    function initProgressBars() {
+        const progressBars = document.querySelectorAll('.progress-bar');
+        progressBars.forEach(bar => {
+            const percent = parseFloat(bar.getAttribute('data-percent')) || 0;
+            // Ensure percent is a valid number between 0 and 100
+            const validPercent = isNaN(percent) ? 0 : Math.max(0, Math.min(100, percent));
+            
+            // Animate the progress bar
+            setTimeout(() => {
+                bar.style.width = validPercent + '%';
+                bar.setAttribute('aria-valuenow', validPercent);
+            }, 100);
+        });
+    }
+    
+    // Rating chart using Plotly
+    document.addEventListener('DOMContentLoaded', function() {
+        try {
+            const chartElement = document.getElementById('rating-chart');
+            if (!chartElement) {
+                console.error('Chart element not found');
+                return;
+            }
+            
+            // Check if Plotly is available
+            if (typeof Plotly === 'undefined') {
+                console.error('Plotly library not loaded');
+                chartElement.innerHTML = '<div class="alert alert-warning">Chart library not available</div>';
+                return;
+            }
+            
+            // Get rating data from data attributes instead of direct template variables
+            const ratingData = {
+                '5 - Excellent': parseInt(chartElement.getAttribute('data-rating-5') || 0),
+                '4 - Very Good': parseInt(chartElement.getAttribute('data-rating-4') || 0),
+                '3 - Good': parseInt(chartElement.getAttribute('data-rating-3') || 0),
+                '2 - Average': parseInt(chartElement.getAttribute('data-rating-2') || 0),
+                '1 - Poor': parseInt(chartElement.getAttribute('data-rating-1') || 0)
+            };
+            
+            const ratingLabels = Object.keys(ratingData);
+            const ratingValues = Object.values(ratingData);
+            
+            // Check if there's any data to display
+            const hasData = ratingValues.some(value => value > 0);
+            
+            if (!hasData) {
+                chartElement.innerHTML = '<div class="text-center py-4"><p class="text-muted">No rating data available</p></div>';
+                return;
+            }
+            
+            Plotly.newPlot('rating-chart', [{
+                labels: ratingLabels,
+                values: ratingValues,
+                type: 'pie',
+                marker: {
+                    colors: ['#28A745', '#17A2B8', '#007BFF', '#FFC107', '#DC3545']
+                },
+                textinfo: 'percent',
+                hoverinfo: 'label+percent+value'
+            }], {
+                margin: {t: 10, b: 10, l: 10, r: 10},
+                responsive: true,
+                autosize: true
+            }).catch(function(error) {
+                console.error('Error rendering chart:', error);
+                chartElement.innerHTML = '<div class="alert alert-danger">Error rendering chart</div>';
+            });
+        } catch (error) {
+            console.error('Error initializing chart:', error);
+            const chartElement = document.getElementById('rating-chart');
+            if (chartElement) {
+                chartElement.innerHTML = '<div class="alert alert-danger">Error initializing chart</div>';
+            }
+        }
+        
+        // Initialize progress bars after chart is loaded
+        initProgressBars();
+    });
+</script>
+{% endblock %}

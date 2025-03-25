@@ -1,0 +1,197 @@
+{% load crispy_forms_tags %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Register - CMRIT EMS</title>
+    <link rel="favicon" href="/static/favicon.ico" type="image/x-icon">
+    <link rel="shortcut icon" href="/static/favicon.ico" type="image/x-icon">
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+    <style>
+        body {
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: linear-gradient(135deg, #269bd8, #c36);
+            background-size: cover;
+        }
+        .card {
+            border: none;
+            border-radius: 10px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+        }
+        .card-header {
+            background-color: #269bd8;
+            border-radius: 10px 10px 0 0 !important;
+            padding: 20px;
+        }
+        .btn-primary {
+            background-color: #269bd8;
+            border-color: #269bd8;
+        }
+        .btn-primary:hover {
+            background-color: #c36;
+            border-color: #c36;
+        }
+        a {
+            color: #269bd8;
+        }
+        a:hover {
+            color: #c36;
+            text-decoration: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="row justify-content-center mt-5">
+            <div class="col-md-8">
+                <div class="card shadow-sm">
+                    <div class="card-header text-white text-center">
+                        <img src="/static/images/logo.png" alt="CMRIT Logo" style="height: 50px; margin-bottom: 10px;">
+                        <h4 class="mb-0">CMRIT Event Management System</h4>
+                    </div>
+                    <div class="card-body">
+                        <h5 class="card-title text-center mb-4">Register New Account</h5>
+                        {% if messages %}
+                            {% for message in messages %}
+                                <div class="alert alert-{{ message.tags }}" role="alert">
+                                    {{ message }}
+                                </div>
+                            {% endfor %}
+                        {% endif %}
+                        <form method="post">
+                            {% csrf_token %}
+                            <div class="row">
+                                <div class="col-md-6">
+                                    {{ form.first_name|as_crispy_field }}
+                                    {{ form.last_name|as_crispy_field }}
+                                    {{ form.email|as_crispy_field }}
+                                    {{ form.password1|as_crispy_field }}
+                                    {{ form.password2|as_crispy_field }}
+                                </div>
+                                <div class="col-md-6">
+                                    {{ form.role|as_crispy_field }}
+                                    {{ form.department|as_crispy_field }}
+                                    {{ form.emp_id|as_crispy_field }}
+                                    {{ form.mobile_number|as_crispy_field }}
+                                </div>
+                            </div>
+                            <button type="submit" class="btn btn-primary btn-block mt-4">Register</button>
+                        </form>                        
+                        <script>
+                            // Add password toggle functionality after the page loads
+                            document.addEventListener('DOMContentLoaded', function() {
+                                // Find all password fields
+                                const passwordFields = document.querySelectorAll('input[type="password"]');
+                                
+                                passwordFields.forEach(function(passwordField) {
+                                    // Create toggle button with eye icon
+                                    const toggleButton = document.createElement('button');
+                                    toggleButton.type = 'button';
+                                    toggleButton.className = 'btn btn-sm btn-outline-secondary';
+                                    toggleButton.innerHTML = '<i class="fas fa-eye"></i>';
+                                    toggleButton.style.position = 'absolute';
+                                    toggleButton.style.right = '10px';
+                                    toggleButton.style.top = '50%';
+                                    toggleButton.style.transform = 'translateY(-50%)';
+                                    toggleButton.style.marginTop = '0';
+                                    toggleButton.style.zIndex = '100';
+                                    toggleButton.title = 'Show/Hide Password';
+                                    
+                                    // Add click event to toggle password visibility
+                                    toggleButton.addEventListener('click', function() {
+                                        if (passwordField.type === 'password') {
+                                            passwordField.type = 'text';
+                                            toggleButton.innerHTML = '<i class="fas fa-eye-slash"></i>';
+                                        } else {
+                                            passwordField.type = 'password';
+                                            toggleButton.innerHTML = '<i class="fas fa-eye"></i>';
+                                        }
+                                        
+                                // Handle department visibility based on role selection
+                                const roleField = document.querySelector('#id_role');
+                                const departmentContainer = document.querySelector('#div_id_department');
+                                
+                                // Function to toggle department visibility
+                                function toggleDepartmentVisibility() {
+                                    const selectedRole = roleField.value;
+                                    if (['HOD', 'STUDENT', 'EVENT_COORDINATOR'].includes(selectedRole)) {
+                                        departmentContainer.style.display = 'block';
+                                    } else {
+                                        departmentContainer.style.display = 'none';
+                                    }
+                                }
+                                
+                                // Set initial visibility
+                                toggleDepartmentVisibility();
+                                
+                                // Add event listener for role changes
+                                roleField.addEventListener('change', toggleDepartmentVisibility);
+                            });
+                                    
+                                    // Add the button to the password field's parent container
+                                    const passwordContainer = passwordField.closest('.form-group');
+                                    if (passwordContainer) {
+                                        passwordContainer.style.position = 'relative';
+                                        passwordContainer.appendChild(toggleButton);
+                                    }
+                                    
+                                // Handle department visibility based on role selection
+                                const roleField = document.querySelector('#id_role');
+                                const departmentContainer = document.querySelector('#div_id_department');
+                                
+                                // Function to toggle department visibility
+                                function toggleDepartmentVisibility() {
+                                    const selectedRole = roleField.value;
+                                    if (['HOD', 'STUDENT', 'EVENT_COORDINATOR'].includes(selectedRole)) {
+                                        departmentContainer.style.display = 'block';
+                                    } else {
+                                        departmentContainer.style.display = 'none';
+                                    }
+                                }
+                                
+                                // Set initial visibility
+                                toggleDepartmentVisibility();
+                                
+                                // Add event listener for role changes
+                                roleField.addEventListener('change', toggleDepartmentVisibility);
+                            });
+                                
+                                // Handle department visibility based on role selection
+                                const roleField = document.querySelector('#id_role');
+                                const departmentContainer = document.querySelector('#div_id_department');
+                                
+                                // Function to toggle department visibility
+                                function toggleDepartmentVisibility() {
+                                    const selectedRole = roleField.value;
+                                    if (['HOD', 'STUDENT', 'EVENT_COORDINATOR'].includes(selectedRole)) {
+                                        departmentContainer.style.display = 'block';
+                                    } else {
+                                        departmentContainer.style.display = 'none';
+                                    }
+                                }
+                                
+                                // Set initial visibility
+                                toggleDepartmentVisibility();
+                                
+                                // Add event listener for role changes
+                                roleField.addEventListener('change', toggleDepartmentVisibility);
+                            });
+                        </script>
+                        <div class="text-center mt-3">
+                            <p>Already have an account? <a href="{% url 'login' %}">Login here</a></p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.5.4/dist/umd/popper.min.js"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+</body>
+</html>

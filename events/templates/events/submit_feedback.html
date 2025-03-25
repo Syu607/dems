@@ -1,0 +1,70 @@
+{% extends 'users/base_dashboard.html' %}
+
+{% block title %}Submit Event Feedback - CMRIT EMS{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="row mb-4">
+        <div class="col-md-12">
+            <h2 class="mb-0">Submit Feedback for {{ event.event_name }}</h2>
+            <p class="text-muted">Your feedback helps us improve future events</p>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-md-8 mx-auto">
+            <div class="card">
+                <div class="card-body">
+                    <form method="post" action="{% url 'submit_feedback' event.id %}">
+                        {% csrf_token %}
+                        
+                        {% if messages %}
+                        <div class="alert alert-info">
+                            {% for message in messages %}
+                                {{ message }}
+                            {% endfor %}
+                        </div>
+                        {% endif %}
+                        
+                        <div class="mb-4">
+                            <label class="form-label">How would you rate this event?</label>
+                            <div class="d-flex justify-content-between mb-2">
+                                <div class="form-check form-check-inline">
+                                    <input class="form-check-input" type="radio" name="rating" id="rating1" value="1" required>
+                                    <label class="form-check-label" for="rating1">Poor</label>
+                                </div>
+                                <div class="form-check form-check-inline">
+                                    <input class="form-check-input" type="radio" name="rating" id="rating2" value="2">
+                                    <label class="form-check-label" for="rating2">Average</label>
+                                </div>
+                                <div class="form-check form-check-inline">
+                                    <input class="form-check-input" type="radio" name="rating" id="rating3" value="3">
+                                    <label class="form-check-label" for="rating3">Good</label>
+                                </div>
+                                <div class="form-check form-check-inline">
+                                    <input class="form-check-input" type="radio" name="rating" id="rating4" value="4">
+                                    <label class="form-check-label" for="rating4">Very Good</label>
+                                </div>
+                                <div class="form-check form-check-inline">
+                                    <input class="form-check-input" type="radio" name="rating" id="rating5" value="5">
+                                    <label class="form-check-label" for="rating5">Excellent</label>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="feedback_text" class="form-label">Your Feedback</label>
+                            <textarea class="form-control" id="feedback_text" name="feedback_text" rows="5" placeholder="Please share your thoughts about the event..." required></textarea>
+                        </div>
+                        
+                        <div class="d-grid gap-2">
+                            <button type="submit" class="btn btn-primary">Submit Feedback</button>
+                            <a href="{% url 'certificates' %}" class="btn btn-outline-secondary">Back to Certificates</a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

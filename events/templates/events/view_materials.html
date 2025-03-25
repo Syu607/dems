@@ -1,0 +1,61 @@
+{% extends 'users/base_dashboard.html' %}
+
+{% block title %}Study Materials - CMRIT EMS{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="row mb-4">
+        <div class="col-md-12">
+            <h2 class="mb-0">Study Materials</h2>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-md-12">
+            <div class="card">
+                <div class="card-body">
+                    {% if registered_events %}
+                        <div class="accordion" id="materialsAccordion">
+                            {% for event in registered_events %}
+                                <div class="accordion-item">
+                                    <h2 class="accordion-header" id="heading{{ event.id }}">
+                                        <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapse{{ event.id }}" aria-expanded="false" aria-controls="collapse{{ event.id }}">
+                                            {{ event.event_name }}
+                                        </button>
+                                    </h2>
+                                    <div id="collapse{{ event.id }}" class="accordion-collapse collapse" aria-labelledby="heading{{ event.id }}" data-bs-parent="#materialsAccordion">
+                                        <div class="accordion-body">
+                                            {% if event.materials.all %}
+                                                <div class="list-group">
+                                                    {% for material in event.materials.all %}
+                                                        <div class="list-group-item list-group-item-action">
+                                                            <div class="d-flex w-100 justify-content-between">
+                                                                <h5 class="mb-1">{{ material.title }}</h5>
+                                                                <small class="text-muted">{{ material.uploaded_at|date:"M d, Y" }}</small>
+                                                            </div>
+                                                            <p class="mb-1">{{ material.description }}</p>
+                                                            <a href="{{ material.file.url }}" class="btn btn-sm btn-primary mt-2" target="_blank">
+                                                                <i class="fas fa-file-pdf"></i> View PDF
+                                                            </a>
+                                                        </div>
+                                                    {% endfor %}
+                                                </div>
+                                            {% else %}
+                                                <p class="text-muted">No study materials available for this event.</p>
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                </div>
+                            {% endfor %}
+                        </div>
+                    {% else %}
+                        <div class="alert alert-info">
+                            <i class="fas fa-info-circle me-2"></i> You are not registered for any events. Please register for events to access study materials.
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

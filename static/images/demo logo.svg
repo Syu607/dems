@@ -1,0 +1,16 @@
+<svg width="200" height="200" xmlns="http://www.w3.org/2000/svg">
+  <title>CMRIT Logo</title>
+  <style>
+    .logo-text { font-family: Arial; font-weight: bold; text-anchor: middle; }
+    .outer-circle { fill: none; stroke: #269bd8; stroke-width: 3; }
+    .inner-circle { fill: #269bd8; }
+    .text-primary { fill: #269bd8; }
+    .text-secondary { fill: #c36; }
+  </style>
+  <circle cx="100" cy="100" r="90" class="outer-circle" />
+  <circle cx="100" cy="100" r="70" class="outer-circle" />
+  <text x="100" y="70" font-size="24" class="logo-text text-primary">CMRIT</text>
+  <text x="100" y="100" font-size="14" class="logo-text text-secondary">EXCELLENCE</text>
+  <text x="100" y="120" font-size="14" class="logo-text text-secondary">IN EDUCATION</text>
+  <text x="100" y="150" font-size="12" class="logo-text text-primary">EST. 2000</text>
+</svg>

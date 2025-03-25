@@ -1,0 +1,458 @@
+{% extends 'users/base_dashboard.html' %}
+
+{% block title %}HOD Pending Events - CMRIT EMS{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="row mb-4">
+        <div class="col-md-12">
+            <h2 class="mb-0">Department Pending Events</h2>
+        </div>
+    </div>
+
+    <!-- Define viewEventDetails function globally before it's used -->
+    <script>
+        function viewEventDetails(eventId) {
+            $.ajax({
+                url: `/events/event/${eventId}/`,
+                type: 'GET',
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest'
+                },
+                success: function(response) {
+                    $('#eventDetailsContent').html(response);
+                    $('#eventDetailsModal').data('eventId', eventId);
+                    $('#eventDetailsModal').modal('show');
+                },
+                error: function(xhr, status, error) {
+                    alert('Error loading event details. Please try again.');
+                }
+            });
+        }
+        
+        function showApprovalForm(eventId) {
+            $('#approvalForm').attr('action', `/events/api/event/${eventId}/approve/`);
+            $('#approvalModal').modal('show');
+            console.log('Setting approval form action to:', `/events/api/event/${eventId}/approve/`);
+        }
+        
+        function showRejectionForm(eventId) {
+            $('#rejectionForm').attr('action', `/events/api/event/${eventId}/reject/`);
+            $('#rejectionModal').modal('show');
+            console.log('Setting rejection form action to:', `/events/api/event/${eventId}/reject/`);
+        }
+
+        function getEventAnalytics(eventId) {
+            $('#analyticsContent').html('<div class="text-center"><i class="fas fa-spinner fa-spin fa-3x"></i><p class="mt-2">Analyzing event data...</p></div>');
+            $('#analyticsModal').modal('show');
+            $('#analyticsModal').data('eventId', eventId);
+            
+            $.ajax({
+                url: `/events/api/event/${eventId}/analytics/`,
+                type: 'GET',
+                success: function(response) {
+                    // Add debug console log to see the full response structure
+                    console.log('Event analytics response:', response);
+                    
+                    if (response.success) {
+                        // Define colors for charts
+                        const colors = {
+                            primary: '#269bd8',
+                            success: '#28a745',
+                            warning: '#ffc107',
+                            danger: '#dc3545',
+                            info: '#17a2b8'
+                        };
+                        
+                        // Determine recommendation class and icon
+                        let recClass, recIcon;
+                        if (response.prediction.includes('Strongly Recommended')) {
+                            recClass = 'success';
+                            recIcon = 'check-circle';
+                        } else if (response.prediction.includes('Recommended')) {
+                            recClass = 'primary';
+                            recIcon = 'thumbs-up';
+                        } else if (response.prediction.includes('Needs Review')) {
+                            recClass = 'warning';
+                            recIcon = 'exclamation-triangle';
+                        } else {
+                            recClass = 'danger';
+                            recIcon = 'times-circle';
+                        }
+                        
+                        // Create HTML for the analytics content
+                        let html = `
+                            <div class="alert alert-${recClass} d-flex align-items-center">
+                                <i class="fas fa-${recIcon} fa-2x mr-3"></i>
+                                <div>
+                                    <h4 class="alert-heading mb-1">${response.prediction || 'No Prediction Available'}</h4>
+                                    <p class="mb-0">Prediction Confidence: ${response.confidence !== undefined ? response.confidence.toFixed(1) : 0}%</p>
+                                </div>
+                            </div>
+                            
+                            <div class="row mb-4">
+                                <div class="col-md-6">
+                                    <div class="card h-100">
+                                        <div class="card-body">
+                                            <h5 class="card-title">Budget Comparison</h5>
+                                            <div class="d-flex justify-content-between mb-2">
+                                                <span>Current: ₹${response.current_budget !== undefined ? response.current_budget.toFixed(2) : '0.00'}</span>
+                                                <span>Avg: ₹${response.avg_budget !== undefined ? response.avg_budget.toFixed(2) : '0.00'}</span>
+                                            </div>
+                                            <div style="height: 200px;">
+                                                <canvas id="budgetChart"></canvas>
+                                            </div>
+                                            <p class="mt-2 ${response.budget_percent_diff !== undefined ? (response.budget_percent_diff > 20 ? 'text-danger' : response.budget_percent_diff < -20 ? 'text-success' : 'text-muted') : 'text-muted'}">
+                                                ${response.budget_percent_diff !== undefined ? (response.budget_percent_diff > 0 ? '+' : '') + response.budget_percent_diff.toFixed(1) : '0'}% compared to average
+                                            </p>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="card h-100">
+                                        <div class="card-body">
+                                            <h5 class="card-title">Attendees Comparison</h5>
+                                            <div class="d-flex justify-content-between mb-2">
+                                                <span>Current: ${response.current_attendees}</span>
+                                                <span>Avg: ${response.avg_attendees !== undefined ? response.avg_attendees.toFixed(0) : '0'}</span>
+                                            </div>
+                                            <div style="height: 200px;">
+                                                <canvas id="attendeesChart"></canvas>
+                                            </div>
+                                            <p class="mt-2 ${response.attendees_percent_diff !== undefined ? (response.attendees_percent_diff > 20 ? 'text-warning' : response.attendees_percent_diff < -20 ? 'text-danger' : 'text-muted') : 'text-muted'}">
+                                                ${response.attendees_percent_diff !== undefined ? (response.attendees_percent_diff > 0 ? '+' : '') + response.attendees_percent_diff.toFixed(1) : '0'}% compared to average
+                                            </p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="row mb-4">
+                                <div class="col-md-6">
+                                    <div class="card">
+                                        <div class="card-body">
+                                            <h5 class="card-title">Similar Events</h5>
+                                            <p class="card-text">Total: ${response.similar_events} events</p>
+                                            <p class="card-text">Similar Budget Range: ${response.similar_budget_events} events</p>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="card">
+                                        <div class="card-body">
+                                            <h5 class="card-title">Prediction Accuracy</h5>
+                                            <div style="height: 150px;">
+                                                <canvas id="accuracyChart"></canvas>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <h5>Feature Importance</h5>
+                            <div class="progress-group mb-2">
+                                <span class="progress-text">Budget</span>
+                                <div class="progress">
+                                    <div class="progress-bar bg-primary" style="width: ${response.feature_importance && response.feature_importance.Budget !== undefined ? response.feature_importance.Budget * 100 : 0}%">${response.feature_importance && response.feature_importance.Budget !== undefined ? (response.feature_importance.Budget * 100).toFixed(1) : '0'}%</div>
+                                </div>
+                            </div>
+                            <div class="progress-group mb-2">
+                                <span class="progress-text">Expected Attendees</span>
+                                <div class="progress">
+                                    <div class="progress-bar bg-success" style="width: ${response.feature_importance && response.feature_importance['Expected Attendees'] !== undefined ? response.feature_importance['Expected Attendees'] * 100 : 0}%">${response.feature_importance && response.feature_importance['Expected Attendees'] !== undefined ? (response.feature_importance['Expected Attendees'] * 100).toFixed(1) : '0'}%</div>
+                                </div>
+                            </div>
+                            <div class="progress-group mb-2">
+                                <span class="progress-text">Registration Fee</span>
+                                <div class="progress">
+                                    <div class="progress-bar bg-info" style="width: ${response.feature_importance && response.feature_importance['Registration Fee'] !== undefined ? response.feature_importance['Registration Fee'] * 100 : 0}%">${response.feature_importance && response.feature_importance['Registration Fee'] !== undefined ? (response.feature_importance['Registration Fee'] * 100).toFixed(1) : '0'}%</div>
+                                </div>
+                            </div>
+                            
+                            <div class="mt-4 text-center">
+                                <button class="btn btn-success mr-3" onclick="showApprovalForm('${eventId}')">
+                                    <i class="fas fa-check"></i> Approve
+                                </button>
+                                <button class="btn btn-danger" onclick="showRejectionForm('${eventId}')">
+                                    <i class="fas fa-times"></i> Reject
+                                </button>
+                            </div>
+                        `;
+                        
+                        $('#analyticsContent').html(html);
+                        $('#analyticsEventId').val(eventId);
+                        
+                        // Create charts after HTML is rendered
+                        setTimeout(() => {
+                            // Budget comparison chart
+                            new Chart(document.getElementById('budgetChart'), {
+                                type: 'bar',
+                                data: {
+                                    labels: ['Current Event', 'Department Average'],
+                                    datasets: [{
+                                        label: 'Budget (₹)',
+                                        data: [response.current_budget !== undefined ? response.current_budget : 0, response.avg_budget !== undefined ? response.avg_budget : 0],
+                                        backgroundColor: [colors.primary, colors.info]
+                                    }]
+                                },
+                                options: {
+                                    responsive: true,
+                                    maintainAspectRatio: false,
+                                    plugins: {
+                                        legend: {
+                                            display: false
+                                        }
+                                    }
+                                }
+                            });
+                            
+                            // Attendees comparison chart
+                            new Chart(document.getElementById('attendeesChart'), {
+                                type: 'bar',
+                                data: {
+                                    labels: ['Current Event', 'Department Average'],
+                                    datasets: [{
+                                        label: 'Expected Attendees',
+                                        data: [response.current_attendees !== undefined ? response.current_attendees : 0, response.avg_attendees !== undefined ? response.avg_attendees : 0],
+                                        backgroundColor: [colors.success, colors.info]
+                                    }]
+                                },
+                                options: {
+                                    responsive: true,
+                                    maintainAspectRatio: false,
+                                    plugins: {
+                                        legend: {
+                                            display: false
+                                        }
+                                    }
+                                }
+                            });
+                            
+                            // Prediction accuracy chart
+                            new Chart(document.getElementById('accuracyChart'), {
+                                type: 'doughnut',
+                                data: {
+                                    labels: ['Confidence', 'Uncertainty'],
+                                    datasets: [{
+                                        data: [
+                                            response.confidence !== undefined ? response.confidence : 0, 
+                                            response.confidence !== undefined ? 100 - response.confidence : 100
+                                        ],
+                                        backgroundColor: [
+                                            response.confidence !== undefined && response.confidence > 85 ? colors.success : 
+                                            response.confidence !== undefined && response.confidence > 70 ? colors.primary : 
+                                            response.confidence !== undefined && response.confidence > 50 ? colors.warning : colors.danger,
+                                            '#f8f9fa'
+                                        ],
+                                        borderWidth: 0
+                                    }]
+                                },
+                                options: {
+                                    responsive: true,
+                                    maintainAspectRatio: false,
+                                    cutout: '70%',
+                                    plugins: {
+                                        tooltip: {
+                                            callbacks: {
+                                                label: function(context) {
+                                                    return `${context.label}: ${context.raw}%`;
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            });
+                        }, 100);
+                    } else {
+                        $('#analyticsContent').html(`<div class="alert alert-info">${response.message || 'Unable to analyze event data.'}</div>`);
+                    }
+                },
+                error: function() {
+                    $('#analyticsContent').html('<div class="alert alert-danger">Error analyzing event data. Please try again.</div>');
+                }
+            });
+        }
+    </script>
+
+    <div class="row mb-4">
+        <div class="col-md-12">
+            <div class="card">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <h4 class="card-title mb-0">Pending Events</h4>
+                        <div>
+                            <a href="{% url 'hod_approved_events' %}" class="btn btn-outline-success">Approved Events</a>
+                            <a href="{% url 'hod_rejected_events' %}" class="btn btn-outline-danger">Rejected Events</a>
+                        </div>
+                    </div>
+                    
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th>S.No</th>
+                                    <th>Event ID</th>
+                                    <th>Department</th>
+                                    <th>Event Title</th>
+                                    <th>Date</th>
+                                    <th>Budget</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for event in pending_events %}
+                                <tr>
+                                    <td>{{ forloop.counter }}</td>
+                                    <td>{{ event.event_id }}</td>
+                                    <td>{{ event.department }}</td>
+                                    <td>{{ event.title }}</td>
+                                    <td>{{ event.date }}</td>
+                                    <td>₹{{ event.budget }}</td>
+                                    <td>
+                                        <button class="btn btn-sm btn-info" onclick="viewEventDetails('{{ event.id }}')">
+                                            <i class="fas fa-eye"></i> View
+                                        </button>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Event Details Modal -->
+    <div class="modal fade" id="eventDetailsModal" tabindex="-1">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Event Details</h5>
+                    <button type="button" class="close" data-dismiss="modal">
+                        <span>&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body" id="eventDetailsContent">
+                    <!-- Event details will be loaded here -->
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+                    <button type="button" class="btn btn-info" onclick="getEventAnalytics($('#eventDetailsModal').data('eventId'))">
+                        <i class="fas fa-chart-line"></i> Get Analytics
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Analytics Modal -->
+    <div class="modal fade" id="analyticsModal" tabindex="-1">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Event Analytics</h5>
+                    <button type="button" class="close" data-dismiss="modal">
+                        <span>&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <div id="analyticsContent">
+                        <!-- Analytics content will be loaded here -->
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <input type="hidden" id="analyticsEventId" value="">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Approval Modal -->
+    <div class="modal fade" id="approvalModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Approve Event</h5>
+                    <button type="button" class="close" data-dismiss="modal">
+                        <span>&times;</span>
+                    </button>
+                </div>
+                <form id="approvalForm" method="post">
+                    {% csrf_token %}
+                    <div class="modal-body">
+                        <p>Are you sure you want to approve this event?</p>
+                        <div class="form-group">
+                            <label for="approvalRemarks">Remarks (optional)</label>
+                            <textarea class="form-control" id="approvalRemarks" name="remarks" rows="3"></textarea>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
+                        <button type="submit" class="btn btn-success">Approve</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Rejection Modal -->
+    <div class="modal fade" id="rejectionModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Reject Event</h5>
+                    <button type="button" class="close" data-dismiss="modal">
+                        <span>&times;</span>
+                    </button>
+                </div>
+                <form id="rejectionForm" method="post">
+                    {% csrf_token %}
+                    <div class="modal-body">
+                        <p>Are you sure you want to reject this event?</p>
+                        <div class="form-group">
+                            <label for="rejectionRemarks">Reason for Rejection</label>
+                            <textarea class="form-control" id="rejectionRemarks" name="remarks" rows="3" required></textarea>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
+                        <button type="submit" class="btn btn-danger">Reject</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% block extra_js %}
+<script>
+$(document).ready(function() {
+    // Handle form submissions
+    $('#approvalForm, #rejectionForm').on('submit', function(e) {
+        e.preventDefault();
+        const form = $(this);
+        const url = form.attr('action');
+        
+        $.ajax({
+            url: url,
+            type: 'POST',
+            data: form.serialize(),
+            success: function(response) {
+                if (response.success) {
+                    alert(response.message || 'Operation completed successfully');
+                    window.location.reload();
+                } else {
+                    alert(response.message || 'An error occurred');
+                }
+            },
+            error: function() {
+                alert('An error occurred. Please try again.');
+            }
+        });
+    });
+});
+</script>
+{% endblock %}
+{% endblock %}

@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">
+  <g>
+    <!-- Medal circle -->
+    <circle cx="50" cy="50" r="30" fill="#f1c40f" stroke="#f39c12" stroke-width="2"/>
+    
+    <!-- Inner circle -->
+    <circle cx="50" cy="50" r="25" fill="#f39c12"/>
+    
+    <!-- Star in the middle -->
+    <path d="M50,30 L55,45 L70,45 L60,55 L65,70 L50,60 L35,70 L40,55 L30,45 L45,45 Z" fill="#f1c40f"/>
+    
+    <!-- Ribbon -->
+    <path d="M35,70 L30,90 L50,80 L70,90 L65,70" fill="#f1c40f" stroke="#f39c12" stroke-width="1"/>
+  </g>
+</svg>

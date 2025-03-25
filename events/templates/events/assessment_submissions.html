@@ -1,0 +1,98 @@
+{% extends 'users/base_dashboard.html' %}
+
+{% block title %}Assessment Submissions - CMRIT EMS{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="row mb-4">
+        <div class="col-md-12 d-flex justify-content-between align-items-center">
+            <h2 class="mb-0">Submissions for {{ assessment.title }}</h2>
+            <a href="{% url 'assessment_list' %}" class="btn btn-secondary">
+                <i class="fas fa-arrow-left"></i> Back to Assessments
+            </a>
+        </div>
+    </div>
+
+    <div class="row mb-3">
+        <div class="col-md-12">
+            <div class="card">
+                <div class="card-body">
+                    <h5 class="card-title">Assessment Details</h5>
+                    <p class="mb-1"><strong>Event:</strong> {{ assessment.event.event_name }}</p>
+                    <p class="mb-1"><strong>Due Date:</strong> {{ assessment.due_date|date:"M d, Y H:i" }}</p>
+                    <p class="mb-1"><strong>Total Submissions:</strong> {{ submissions.count }}</p>
+                    <p class="mb-0"><strong>Description:</strong> {{ assessment.description }}</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-md-12">
+            <div class="card">
+                <div class="card-body">
+                    {% if submissions %}
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th>Student</th>
+                                    <th>Submitted At</th>
+                                    <th>Status</th>
+                                    <th>Score</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for submission in submissions %}
+                                <tr>
+                                    <td>{{ submission.student.username }}</td>
+                                    <td>{{ submission.submitted_at|date:"M d, Y H:i" }}</td>
+                                    <td>
+                                        {% if submission.score is not None %}
+                                        <span class="badge bg-success">Graded</span>
+                                        {% else %}
+                                        <span class="badge bg-warning">Pending</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        {% if submission.score is not None %}
+                                        {{ submission.score }}
+                                        {% else %}
+                                        -
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        {% if submission.submission_file %}
+                                        <a href="{{ submission.submission_file.url }}" class="btn btn-sm btn-primary" target="_blank" title="Download Submission">
+                                            <i class="fas fa-download"></i>
+                                        </a>
+                                        {% else %}
+                                        <span class="btn btn-sm btn-secondary disabled" title="No file submitted">
+                                            <i class="fas fa-times"></i>
+                                        </span>
+                                        {% endif %}
+                                        {% if submission.score is None %}
+                                        <a href="{% url 'grade_assessment' submission.id %}" class="btn btn-sm btn-success" title="Grade Submission">
+                                            <i class="fas fa-check"></i>
+                                        </a>
+                                        {% else %}
+                                        <a href="{% url 'grade_assessment' submission.id %}" class="btn btn-sm btn-warning" title="Update Grade">
+                                            <i class="fas fa-edit"></i>
+                                        </a>
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    {% else %}
+                    <p class="text-muted text-center mb-0">No submissions found for this assessment</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,162 @@
+{% extends 'users/base_dashboard.html' %}
+
+{% block title %}Create Event - CMRIT EMS{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="row justify-content-center">
+        <div class="col-md-10">
+            <div class="card">
+                <div class="card-header bg-primary text-white">
+                    <h4 class="mb-0">Create New Event</h4>
+                </div>
+                <div class="card-body">
+                    <form id="createEventForm" method="post" enctype="multipart/form-data">
+                        {% csrf_token %}
+                        <div class="row">
+                            <!-- Basic Event Information -->
+                            <div class="col-md-6 mb-3">
+                                <h5 class="border-bottom pb-2">Basic Information</h5>
+                                <div class="mb-3">
+                                    <label for="event_name" class="form-label">Event Name</label>
+                                    <input type="text" class="form-control" id="event_name" name="event_name" required>
+                                </div>
+                                <div class="mb-3">
+                                    <label for="title" class="form-label">Title</label>
+                                    <input type="text" class="form-control" id="title" name="title" required>
+                                </div>
+                                <div class="mb-3">
+                                    <label for="about" class="form-label">About</label>
+                                    <textarea class="form-control" id="about" name="about" rows="3" required></textarea>
+                                </div>
+                                <div class="mb-3">
+                                    <label for="date" class="form-label">Date</label>
+                                    <input type="date" class="form-control" id="date" name="date" required>
+                                </div>
+                                <div class="mb-3">
+                                    <label for="time" class="form-label">Time</label>
+                                    <input type="time" class="form-control" id="time" name="time" required>
+                                </div>
+                            </div>
+                            
+                            <!-- Event Details -->
+                            <div class="col-md-6 mb-3">
+                                <h5 class="border-bottom pb-2">Event Details</h5>
+                                <div class="mb-3">
+                                    <label for="mode" class="form-label">Mode</label>
+                                    <select class="form-select" id="mode" name="mode" required>
+                                        <option value="">Select Mode</option>
+                                        <option value="ONLINE">Online</option>
+                                        <option value="OFFLINE">Offline</option>
+                                    </select>
+                                </div>
+                                <div class="mb-3">
+                                    <label for="venue" class="form-label">Venue</label>
+                                    <input type="text" class="form-control" id="venue" name="venue">
+                                </div>
+                                <div class="mb-3">
+                                    <label for="expected_attendees" class="form-label">Expected Attendees</label>
+                                    <input type="number" class="form-control" id="expected_attendees" name="expected_attendees" required>
+                                </div>
+                            </div>
+
+                            <!-- Budget Information -->
+                            <div class="col-12 mt-4">
+                                <h5 class="border-bottom pb-2">Budget Information</h5>
+                                <div class="row">
+                                    <div class="col-md-4 mb-3">
+                                        <label for="budget" class="form-label">Total Budget</label>
+                                        <input type="number" step="0.01" class="form-control" id="budget" name="budget" required>
+                                    </div>
+                                    <div class="col-md-4 mb-3">
+                                        <label for="registration_fee" class="form-label">Registration Fee</label>
+                                        <input type="number" step="0.01" class="form-control" id="registration_fee" name="registration_fee" required>
+                                    </div>
+                                    <div class="col-md-4 mb-3">
+                                        <label for="refreshment" class="form-label">Refreshment Cost</label>
+                                        <input type="number" step="0.01" class="form-control" id="refreshment" name="refreshment" required>
+                                    </div>
+                                    <div class="col-md-4 mb-3">
+                                        <label for="renumeration" class="form-label">Renumeration</label>
+                                        <input type="number" step="0.01" class="form-control" id="renumeration" name="renumeration" required>
+                                    </div>
+                                    <div class="col-md-4 mb-3">
+                                        <label for="honorarium" class="form-label">Honorarium</label>
+                                        <input type="number" step="0.01" class="form-control" id="honorarium" name="honorarium" required>
+                                    </div>
+                                </div>
+                                <div class="mb-3">
+                                    <label for="other_requirements" class="form-label">Other Requirements</label>
+                                    <textarea class="form-control" id="other_requirements" name="other_requirements" rows="3"></textarea>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="text-end mt-4">
+                            <button type="button" class="btn btn-secondary me-2" onclick="window.location.href='/events/my-events/'">Cancel</button>
+                            <button type="submit" class="btn btn-primary">Create Event</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Event ID Success Modal -->
+<div class="modal fade" id="eventSuccessModal" tabindex="-1" aria-labelledby="eventSuccessModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header bg-success text-white">
+                <h5 class="modal-title" id="eventSuccessModalLabel">Event Created Successfully</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body text-center">
+                <div class="mb-4">
+                    <i class="fas fa-check-circle text-success" style="font-size: 4rem;"></i>
+                </div>
+                <h5>Your event has been created successfully!</h5>
+                <p>Your event is now pending approval.</p>
+                <div class="alert alert-info mt-3">
+                    <strong>Event ID:</strong> <span id="createdEventId" class="font-weight-bold"></span>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-primary" onclick="window.location.href='/events/my-events/'"> View My Events</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% block extra_js %}
+<script>
+$(document).ready(function() {
+    // Handle form submission via AJAX
+    $('#createEventForm').on('submit', function(e) {
+        e.preventDefault();
+        
+        $.ajax({
+            url: "{% url 'create_event' %}",
+            type: 'POST',
+            data: $(this).serialize(),
+            headers: {
+                'X-Requested-With': 'XMLHttpRequest'
+            },
+            success: function(response) {
+                if (response.success) {
+                    // Display the event ID in the success modal
+                    $('#createdEventId').text(response.event_id);
+                    $('#eventSuccessModal').modal('show');
+                } else {
+                    alert(response.message || 'An error occurred while creating the event.');
+                }
+            },
+            error: function() {
+                alert('An error occurred while creating the event. Please try again.');
+            }
+        });
+    });
+});
+</script>
+{% endblock %}
+{% endblock %}

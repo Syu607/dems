@@ -1,0 +1,199 @@
+{% extends 'users/base_dashboard.html' %}
+
+{% block title %}Event Scheduler - CMRIT EMS{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <div class="row">
+        <div class="col-12">
+            <div class="card mb-4">
+                <div class="card-header pb-0">
+                    <h6 class="text-primary">Event Scheduler</h6>
+                    <p class="text-sm">Create and manage sessions for your events</p>
+                </div>
+                <div class="card-body px-0 pt-0 pb-2">
+                    <div class="p-4">
+                        <form id="scheduleForm" method="post" action="{% url 'event_scheduler' %}">
+                            {% csrf_token %}
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="form-group">
+                                        <label for="event" class="form-control-label">Select Event</label>
+                                        <select class="form-control" id="event" name="event" required>
+                                            <option value="">-- Select Event --</option>
+                                            {% for event in events %}
+                                                <option value="{{ event.id }}">{{ event.event_name }}</option>
+                                            {% endfor %}
+                                        </select>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div id="sessions-container">
+                                <div class="session-item mb-3 p-3 border rounded">
+                                    <div class="row">
+                                        <div class="col-md-4">
+                                            <div class="form-group">
+                                                <label class="form-control-label">Session Name</label>
+                                                <input type="text" class="form-control" name="session_name[]" required>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-3">
+                                            <div class="form-group">
+                                                <label class="form-control-label">Start Time</label>
+                                                <input type="time" class="form-control" name="start_time[]" required>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-3">
+                                            <div class="form-group">
+                                                <label class="form-control-label">End Time</label>
+                                                <input type="time" class="form-control" name="end_time[]" required>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-2 d-flex align-items-end">
+                                            <button type="button" class="btn btn-sm btn-danger remove-session">Remove</button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="row mb-4">
+                                <div class="col-12">
+                                    <button type="button" id="add-session" class="btn btn-sm btn-info">
+                                        <i class="fas fa-plus"></i> Add Session
+                                    </button>
+                                </div>
+                            </div>
+                            
+                            <div class="row">
+                                <div class="col-12">
+                                    <button type="submit" class="btn btn-primary">Save Schedule</button>
+                                    <a href="{% url 'my_events' %}" class="btn btn-secondary">Cancel</a>
+                                </div>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    {% if event_schedules %}
+    <div class="row mt-4">
+        <div class="col-12">
+            <div class="card mb-4">
+                <div class="card-header pb-0">
+                    <h6 class="text-primary">Existing Schedules</h6>
+                </div>
+                <div class="card-body px-0 pt-0 pb-2">
+                    <div class="table-responsive p-0">
+                        <table class="table align-items-center mb-0">
+                            <thead>
+                                <tr>
+                                    <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Event</th>
+                                    <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 ps-2">Session</th>
+                                    <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 ps-2">Time</th>
+                                    <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 ps-2">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for schedule in event_schedules %}
+                                <tr>
+                                    <td>
+                                        <div class="d-flex px-2 py-1">
+                                            <div class="d-flex flex-column justify-content-center">
+                                                <h6 class="mb-0 text-sm">{{ schedule.event.event_name }}</h6>
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <td>
+                                        <p class="text-xs font-weight-bold mb-0">{{ schedule.session_name }}</p>
+                                    </td>
+                                    <td>
+                                        <p class="text-xs text-secondary mb-0">{{ schedule.start_time }} - {{ schedule.end_time }}</p>
+                                    </td>
+                                    <td>
+                                        <a href="#" class="btn btn-sm btn-danger delete-schedule" data-id="{{ schedule.id }}">
+                                            <i class="fas fa-trash"></i>
+                                        </a>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    $(document).ready(function() {
+        // Add new session
+        $('#add-session').click(function() {
+            const sessionHtml = `
+                <div class="session-item mb-3 p-3 border rounded">
+                    <div class="row">
+                        <div class="col-md-4">
+                            <div class="form-group">
+                                <label class="form-control-label">Session Name</label>
+                                <input type="text" class="form-control" name="session_name[]" required>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="form-group">
+                                <label class="form-control-label">Start Time</label>
+                                <input type="time" class="form-control" name="start_time[]" required>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="form-group">
+                                <label class="form-control-label">End Time</label>
+                                <input type="time" class="form-control" name="end_time[]" required>
+                            </div>
+                        </div>
+                        <div class="col-md-2 d-flex align-items-end">
+                            <button type="button" class="btn btn-sm btn-danger remove-session">Remove</button>
+                        </div>
+                    </div>
+                </div>
+            `;
+            $('#sessions-container').append(sessionHtml);
+        });
+        
+        // Remove session
+        $(document).on('click', '.remove-session', function() {
+            $(this).closest('.session-item').remove();
+        });
+        
+        // Delete schedule
+        $('.delete-schedule').click(function(e) {
+            e.preventDefault();
+            if (confirm('Are you sure you want to delete this session?')) {
+                const scheduleId = $(this).data('id');
+                $.ajax({
+                    url: `/events/delete-schedule/${scheduleId}/`,
+                    type: 'POST',
+                    headers: {
+                        'X-CSRFToken': $('input[name="csrfmiddlewaretoken"]').val()
+                    },
+                    success: function(response) {
+                        if (response.success) {
+                            location.reload();
+                        } else {
+                            alert('Error: ' + response.message);
+                        }
+                    },
+                    error: function() {
+                        alert('An error occurred while deleting the schedule.');
+                    }
+                });
+            }
+        });
+    });
+</script>
+{% endblock %}

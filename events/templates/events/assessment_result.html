@@ -1,0 +1,100 @@
+{% extends 'users/base_dashboard.html' %}
+
+{% block title %}Assessment Result - CMRIT EMS{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="row mb-4">
+        <div class="col-md-12">
+            <h2 class="mb-0">Assessment Result</h2>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-md-12">
+            <div class="card">
+                <div class="card-body">
+                    <div class="mb-4">
+                        <h5>{{ assessment.title }}</h5>
+                        <p class="text-muted mb-2">Event: {{ assessment.event.event_name }}</p>
+                        <p class="text-muted mb-2">Submitted: {{ submission.submitted_at|date:"M d, Y H:i" }}</p>
+                    </div>
+
+                    <div class="alert {% if passed %}alert-success{% else %}alert-danger{% endif %} mb-4">
+                        <h4 class="alert-heading">
+                            {% if passed %}
+                                <i class="fas fa-check-circle me-2"></i> Congratulations! You Passed
+                            {% else %}
+                                <i class="fas fa-times-circle me-2"></i> Assessment Not Passed
+                            {% endif %}
+                        </h4>
+                        <p class="mb-0">Your score: {{ submission.score }}/{{ assessment.total_marks }}</p>
+                        <p class="mb-0">Passing score: {{ assessment.passing_score }}/{{ assessment.total_marks }}</p>
+                    </div>
+
+                    {% if questions %}
+                    <h5 class="mb-3">Your Answers</h5>
+                    {% for question in questions %}
+                        <div class="card mb-3">
+                            <div class="card-header d-flex justify-content-between align-items-center">
+                                <span>Question {{ forloop.counter }}</span>
+                                {% with answer=answers|get_item:question.id %}
+                                    {% if answer.is_correct %}
+                                    <span class="badge bg-success">Correct</span>
+                                    {% else %}
+                                    <span class="badge bg-danger">Incorrect</span>
+                                    {% endif %}
+                                {% endwith %}
+                            </div>
+                            <div class="card-body">
+                                <p>{{ question.question_text }}</p>
+                                
+                                {% if question.question_type == 'MCQ' or question.question_type == 'MSQ' %}
+                                    <ul class="list-group">
+                                    {% for option in question.options.all %}
+                                        <li class="list-group-item {% if option.is_correct %}list-group-item-success{% endif %}">
+                                            {% with answer=answers|get_item:question.id %}
+                                                {% if option in answer.selected_options.all %}
+                                                    <i class="fas fa-check-circle text-primary me-2"></i>
+                                                {% endif %}
+                                            {% endwith %}
+                                            {{ option.option_text }}
+                                            {% if option.is_correct %}
+                                                <span class="badge bg-success float-end">Correct</span>
+                                            {% endif %}
+                                        </li>
+                                    {% endfor %}
+                                    </ul>
+                                {% elif question.question_type == 'NAT' %}
+                                    {% with answer=answers|get_item:question.id %}
+                                        <p><strong>Your answer:</strong> {{ answer.numerical_value }}</p>
+                                        <p><strong>Correct answer:</strong> {{ question.numerical_answer.correct_answer }} (±{{ question.numerical_answer.tolerance }})</p>
+                                    {% endwith %}
+                                {% endif %}
+                            </div>
+                        </div>
+                    {% endfor %}
+                    {% endif %}
+
+                    <div class="d-flex justify-content-between mt-4">
+                        <a href="{% url 'student_assessment_list' %}" class="btn btn-secondary">
+                            <i class="fas fa-arrow-left me-2"></i> Back to Assessments
+                        </a>
+                        {% if passed and has_certificate %}
+                        <a href="{% url 'certificates' %}" class="btn btn-primary">
+                            <i class="fas fa-certificate me-2"></i> View Certificate
+                        </a>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // Add any JavaScript needed for the assessment result page
+</script>
+{% endblock %}

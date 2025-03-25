@@ -1,0 +1,51 @@
+{% extends 'users/base_dashboard.html' %}
+
+{% block title %}Upload Study Material - CMRIT EMS{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="row mb-4">
+        <div class="col-md-12">
+            <h2 class="mb-0">Upload Study Material</h2>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-md-12">
+            <div class="card">
+                <div class="card-body">
+                    <form method="post" enctype="multipart/form-data">
+                        {% csrf_token %}
+                        <div class="mb-3">
+                            <label for="event" class="form-label">Event</label>
+                            <select class="form-select" id="event" name="event" required>
+                                <option value="">Select Event</option>
+                                {% for event in events %}
+                                <option value="{{ event.id }}">{{ event.event_name }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label for="title" class="form-label">Title</label>
+                            <input type="text" class="form-control" id="title" name="title" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="description" class="form-label">Description</label>
+                            <textarea class="form-control" id="description" name="description" rows="4"></textarea>
+                        </div>
+                        <div class="mb-3">
+                            <label for="material_file" class="form-label">PDF File</label>
+                            <input type="file" class="form-control" id="material_file" name="material_file" accept="application/pdf" required>
+                            <div class="form-text">Upload PDF study materials for this event</div>
+                        </div>
+                        <div class="d-flex justify-content-end">
+                            <a href="{% url 'my_events' %}" class="btn btn-secondary me-2">Cancel</a>
+                            <button type="submit" class="btn btn-primary">Upload Material</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

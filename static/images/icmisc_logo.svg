@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 60">
+  <g>
+    <!-- Dot for the i -->
+    <circle cx="110" cy="20" r="5" fill="#3498db"/>
+    
+    <!-- Text -->
+    <text x="100" y="40" font-family="Arial" font-size="24" font-weight="bold" text-anchor="middle">
+      <tspan fill="#333">i</tspan><tspan fill="#3498db">CMISC</tspan>
+    </text>
+  </g>
+</svg>

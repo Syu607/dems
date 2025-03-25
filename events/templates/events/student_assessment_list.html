@@ -1,0 +1,83 @@
+{% extends 'users/base_dashboard.html' %}
+
+{% block title %}My Assessments - CMRIT EMS{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="row mb-4">
+        <div class="col-md-12">
+            <h2 class="mb-0">My Assessments</h2>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-md-12">
+            <div class="card">
+                <div class="card-body">
+                    {% if assessments %}
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th>Event</th>
+                                    <th>Title</th>
+                                    <th>Due Date</th>
+                                    <th>Status</th>
+                                    <th>Score</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for assessment in assessments %}
+                                <tr>
+                                    <td>{{ assessment.event.event_name }}</td>
+                                    <td>{{ assessment.title }}</td>
+                                    <td>{{ assessment.due_date|date:"M d, Y H:i" }}</td>
+                                    <td>
+                                        {% if assessment.submissions.exists %}
+                                        <span class="badge bg-success">Submitted</span>
+                                        {% else %}
+                                            {% if assessment.due_date < now %}
+                                            <span class="badge bg-danger">Overdue</span>
+                                            {% else %}
+                                            <span class="badge bg-warning">Pending</span>
+                                            {% endif %}
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        {% if assessment.submissions.exists %}
+                                            {% with submission=assessment.submissions.first %}
+                                                {% if submission.score %}
+                                                {{ submission.score }}
+                                                {% else %}
+                                                <span class="text-muted">Not graded</span>
+                                                {% endif %}
+                                            {% endwith %}
+                                        {% else %}
+                                        -
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        <a href="#" class="btn btn-sm btn-primary" title="View Details">
+                                            <i class="fas fa-eye"></i>
+                                        </a>
+                                        {% if not assessment.submissions.exists and assessment.due_date > now %}
+                                        <a href="{% url 'submit_assessment' assessment.id %}" class="btn btn-sm btn-success" title="Submit Assessment">
+                                            <i class="fas fa-upload"></i>
+                                        </a>
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    {% else %}
+                    <p class="text-muted text-center mb-0">No assessments found</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

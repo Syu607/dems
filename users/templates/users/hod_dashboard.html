@@ -1,0 +1,332 @@
+{% extends 'users/base_dashboard.html' %}
+
+{% block title %}HOD Dashboard - CMRIT EMS{% endblock %}
+
+{% block nav_items %}
+<li class="nav-item">
+    <a class="nav-link" href="{% url 'event_approval_list' %}">
+        <i class="fas fa-check-circle"></i> Event Approvals
+    </a>
+</li>
+<li class="nav-item">
+    <a class="nav-link" href="{% url 'analytics' %}">
+        <i class="fas fa-chart-line"></i> Department Analytics
+    </a>
+</li>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <div class="row mb-4">
+        <div class="col-md-4 mb-4">
+            <div class="card bg-primary text-white h-100">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h6 class="card-title">Department Events</h6>
+                            <h2 class="mb-0" id="dept-events-count">0</h2>
+                        </div>
+                        <i class="fas fa-calendar-alt fa-2x"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4 mb-4">
+            <div class="card bg-success text-white h-100">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h6 class="card-title">Pending Approvals</h6>
+                            <h2 class="mb-0" id="pending-approvals-count">0</h2>
+                        </div>
+                        <i class="fas fa-hourglass-half fa-2x"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4 mb-4">
+            <div class="card bg-info text-white h-100">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h6 class="card-title">Student Participation</h6>
+                            <h2 class="mb-0" id="student-participation-count">0</h2>
+                        </div>
+                        <i class="fas fa-users fa-2x"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="row">
+        <div class="col-md-6 mb-4">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">Event Status Distribution</h5>
+                </div>
+                <div class="card-body">
+                    <div id="event-status-chart" style="height: 300px;"></div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6 mb-4">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">Monthly Events</h5>
+                </div>
+                <div class="card-body">
+                    <div id="monthly-events-chart" style="height: 300px;"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="row">
+        <div class="col-md-8 mb-4">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">Assessment Performance</h5>
+                </div>
+                <div class="card-body">
+                    <div id="assessment-performance-chart" style="height: 300px;"></div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4 mb-4">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">Event Mode Distribution</h5>
+                </div>
+                <div class="card-body">
+                    <div id="event-mode-chart" style="height: 300px;"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // Initialize data object
+    let dashboardData = {
+        departmentEvents: 0,
+        pendingApprovals: 0,
+        studentParticipation: 0,
+        eventStatus: {
+            'Pending': 0,
+            'HOD Approved': 0,
+            'Principal Approved': 0
+        },
+        monthlyEvents: [
+            {month: 'Jan', count: 0},
+            {month: 'Feb', count: 0},
+            {month: 'Mar', count: 0},
+            {month: 'Apr', count: 0},
+            {month: 'May', count: 0},
+            {month: 'Jun', count: 0},
+            {month: 'Jul', count: 0},
+            {month: 'Aug', count: 0},
+            {month: 'Sep', count: 0},
+            {month: 'Oct', count: 0},
+            {month: 'Nov', count: 0},
+            {month: 'Dec', count: 0}
+        ],
+        assessmentPerformance: {},
+        eventModes: {
+            'Online': 0,
+            'Offline': 0
+        }
+    };
+    
+    // Function to fetch real-time data from API
+    function fetchDashboardData() {
+        fetch('/events/api/dashboard/hod/')
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    dashboardData = data;
+                    updateDashboardUI();
+                } else {
+                    console.error('Error fetching dashboard data:', data.message);
+                }
+            })
+            .catch(error => {
+                console.error('Error fetching dashboard data:', error);
+            });
+    }
+    
+    // Initial data fetch
+    fetchDashboardData();
+
+    // Function to update all UI elements with the latest data
+    function updateDashboardUI() {
+        // Update dashboard counters
+        document.getElementById('dept-events-count').textContent = dashboardData.departmentEvents;
+        document.getElementById('pending-approvals-count').textContent = dashboardData.pendingApprovals;
+        document.getElementById('student-participation-count').textContent = dashboardData.studentParticipation;
+        
+        // Event Status Distribution Chart using Plotly
+        const statusLabels = Object.keys(dashboardData.eventStatus);
+        const statusValues = Object.values(dashboardData.eventStatus);
+        
+        Plotly.newPlot('event-status-chart', [{
+            labels: statusLabels,
+            values: statusValues,
+            type: 'pie',
+            marker: {
+                colors: ['#FFC107', '#17A2B8', '#28A745']
+            }
+        }], {
+            margin: {t: 10, b: 10, l: 10, r: 10}
+        });
+
+        // Monthly Events Chart using Chart.js
+        // Clear previous chart if exists
+        const monthlyContainer = document.getElementById('monthly-events-chart');
+        monthlyContainer.innerHTML = '';
+        
+        const monthlyCtx = document.createElement('canvas');
+        monthlyCtx.id = 'monthly-canvas';
+        monthlyContainer.appendChild(monthlyCtx);
+        
+        new Chart(monthlyCtx, {
+            type: 'bar',
+            data: {
+                labels: dashboardData.monthlyEvents.map(item => item.month),
+                datasets: [{
+                    label: 'Events',
+                    data: dashboardData.monthlyEvents.map(item => item.count),
+                    backgroundColor: '#269bd8',
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        title: {
+                            display: true,
+                            text: 'Number of Events'
+                        }
+                    }
+                }
+            }
+        });
+
+        // Assessment Performance Chart using Plotly
+        const assessmentLabels = Object.keys(dashboardData.assessmentPerformance);
+        const assessmentValues = Object.values(dashboardData.assessmentPerformance);
+    
+    Plotly.newPlot('assessment-performance-chart', [{
+        x: assessmentLabels,
+        y: assessmentValues,
+        type: 'bar',
+        marker: {
+            color: '#4BC0C0'
+        }
+    }], {
+        margin: {t: 10, b: 40, l: 40, r: 10},
+        xaxis: {title: 'Event'},
+        yaxis: {title: 'Average Score (%)'}
+    });
+
+        // Event Mode Distribution Chart using Plotly
+        const modeLabels = Object.keys(dashboardData.eventModes);
+        const modeValues = Object.values(dashboardData.eventModes);
+        
+        Plotly.newPlot('event-mode-chart', [{
+            labels: modeLabels,
+            values: modeValues,
+            type: 'pie',
+            marker: {
+                colors: ['#17A2B8', '#FFC107']
+            }
+        }], {
+            margin: {t: 10, b: 10, l: 10, r: 10}
+        });
+    }
+
+    // Function to refresh data periodically
+    function refreshDashboardData() {
+        fetchDashboardData();
+        console.log('Dashboard data refreshed');
+    }
+
+    // Refresh data every 5 minutes
+    setInterval(refreshDashboardData, 300000);
+    
+    // Initial UI update
+    updateDashboardUI();
+</script>
+
+<!-- PowerBI JavaScript SDK -->
+<script src="https://microsoft.github.io/PowerBI-JavaScript/demo/node_modules/powerbi-client/dist/powerbi.min.js"></script>
+<script>
+    // PowerBI Embed Configuration for HOD Dashboard
+    const config = {
+        type: 'report',
+        tokenType: 'Embed',
+        accessToken: '{{ powerbi_access_token }}',
+        embedUrl: '{{ powerbi_embed_url }}',
+        id: '{{ powerbi_report_id }}',
+        permissions: 'View',
+        settings: {
+            filterPaneEnabled: true,
+            navContentPaneEnabled: true,
+            background: models.BackgroundType.Transparent,
+            layoutType: models.LayoutType.Custom,
+            customLayout: {
+                displayOption: models.DisplayOption.FitToWidth
+            }
+        },
+        filters: [
+            {
+                $schema: "http://powerbi.com/product/schema#basic",
+                target: {
+                    table: "Users",
+                    column: "role"
+                },
+                operator: "In",
+                values: ["HOD"]
+            },
+            {
+                $schema: "http://powerbi.com/product/schema#basic",
+                target: {
+                    table: "Users",
+                    column: "department"
+                },
+                operator: "Equals",
+                values: ["{{ user.department }}"]
+            }
+        ]
+    };
+
+    // Embed the report
+    const reportContainer = document.getElementById('powerbi-container');
+    const report = powerbi.embed(reportContainer, config);
+
+    // Handle report events
+    report.on('loaded', function() {
+        console.log('HOD dashboard loaded successfully');
+    });
+
+    report.on('error', function(event) {
+        console.error('Error loading HOD dashboard:', event.detail);
+    });
+
+    // Refresh data periodically
+    setInterval(function() {
+        report.refresh()
+            .then(function() {
+                console.log('Dashboard data refreshed');
+            })
+            .catch(function(error) {
+                console.error('Error refreshing data:', error);
+            });
+    }, 300000); // Refresh every 5 minutes
+</script>
+{% endblock %}
